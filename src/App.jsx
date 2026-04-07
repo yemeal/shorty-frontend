@@ -162,7 +162,7 @@ const App = () => {
       {/* Liquid Glass Background Elements */}
       {/* Центральное пятно сверху, чтобы на десктопе под пилюлей тоже был свет для преломления */}
       <div className="fixed top-[-20%] sm:top-[-15%] left-[50%] -translate-x-1/2 w-[300px] sm:w-[800px] h-[300px] sm:h-[400px] rounded-[100%] bg-blue-500/20 blur-[100px] sm:blur-[140px] pointer-events-none z-0 animate-float-delayed" />
-      
+
       <div className="fixed top-[-10%] left-[-10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-blue-600/30 blur-[100px] sm:blur-[130px] pointer-events-none z-0 animate-float" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[350px] sm:w-[600px] h-[350px] sm:h-[600px] rounded-full bg-purple-600/20 blur-[120px] sm:blur-[150px] pointer-events-none z-0 animate-float-delayed" />
       <div className="fixed top-[30%] left-[40%] w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] rounded-full bg-indigo-500/20 blur-[90px] sm:blur-[120px] pointer-events-none z-0 animate-float" />
@@ -193,7 +193,7 @@ const App = () => {
               {lang.toUpperCase()}
             </button>
             <a
-              href="https://github.com/yemeal/shorty-backend"
+              href="https://github.com/yemeal/shorty"
               target="_blank"
               rel="noreferrer"
               className="hidden sm:flex items-center bg-[#0F1C36] hover:bg-[#162A51] hover:scale-105 active:scale-95 border border-blue-500/20 py-2 px-5 rounded-full transition-all font-medium text-sm text-blue-400 hover:text-blue-300 hover:shadow-[0_0_15px_rgba(37,99,235,0.3)] shadow-md z-10"
