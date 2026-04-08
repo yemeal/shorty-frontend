@@ -5,6 +5,6 @@ import Router from './router.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <Router />
   </StrictMode>,
 )
