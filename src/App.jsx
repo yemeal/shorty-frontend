@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Link2,
   ExternalLink,
@@ -50,6 +51,7 @@ const translations = {
     footer: "шорти.рф — Сделано с кайфом"
   }
 };
+export { translations };
 
 const App = () => {
   const [longUrl, setLongUrl] = useState('');
