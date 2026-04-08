@@ -24,7 +24,17 @@ export const translations = {
     slugErrorReserved: "This word is reserved and cannot be used",
     slugErrorTaken: "This address is already taken",
     profilePlaceholder1: "Nothing here yet...",
-    profilePlaceholder2: "...but something will appear soon"
+    profilePlaceholder2: "...but something will appear soon",
+    settingsTitle: "Settings",
+    themeToggle: "Toggle theme",
+    themeLight: "Light mode",
+    themeDark: "Dark mode",
+    easterEgg: "NEVER CLICK! 🚀",
+    recentLinksTitle: "Recent Links",
+    clearHistoryBtn: "Clear History",
+    downloadQRBtn: "Download QR",
+    copySuccess: "Link copied to clipboard!",
+    clearSuccess: "History cleared!"
   },
   ru: {
     brand: "шорти.рф",
@@ -51,6 +61,16 @@ export const translations = {
     slugErrorReserved: "Это слово зарезервировано и недоступно",
     slugErrorTaken: "Этот адрес уже занят",
     profilePlaceholder1: "Пока здесь ничего нет...",
-    profilePlaceholder2: "...но скоро обязательно появится"
+    profilePlaceholder2: "...но скоро обязательно появится",
+    settingsTitle: "Настройки",
+    themeToggle: "Сменить тему",
+    themeLight: "Светлая тема",
+    themeDark: "Тёмная тема",
+    easterEgg: "НЕ НАЖИМАТЬ! 🚀",
+    recentLinksTitle: "Недавние ссылки",
+    clearHistoryBtn: "Очистить историю",
+    downloadQRBtn: "Скачать QR",
+    copySuccess: "Ссылка скопирована в буфер обмена!",
+    clearSuccess: "История очищена!"
   }
 };

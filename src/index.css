@@ -1,10 +1,22 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-display: 'Manrope', sans-serif;
+}
+
+html {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+html.dark {
+  background-color: #070709;
+  color: #f1f5f9;
 }
 
 html,
@@ -13,11 +25,18 @@ body {
   padding: 0;
   width: 100%;
   height: 100%;
-  background-color: #070709;
-  background-image: url("data:image/svg+xml,%3Csvg width='50' height='50' viewBox='0 0 50 50' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0.5' y='0.5' width='49' height='49' stroke='white' stroke-opacity='0.01'/%3E%3C/svg%3E");
-  background-size: 50px 50px;
-  color: #f1f5f9;
   overflow-x: hidden;
+}
+
+body {
+  /* Light theme default */
+  background-image: url("data:image/svg+xml,%3Csvg width='50' height='50' viewBox='0 0 50 50' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0.5' y='0.5' width='49' height='49' stroke='%23cbd5e1' stroke-opacity='0.4'/%3E%3C/svg%3E");
+  background-size: 50px 50px;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+html.dark body {
+  background-image: url("data:image/svg+xml,%3Csvg width='50' height='50' viewBox='0 0 50 50' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0.5' y='0.5' width='49' height='49' stroke='white' stroke-opacity='0.01'/%3E%3C/svg%3E");
 }
 
 #root {
@@ -73,4 +92,28 @@ body {
   background: linear-gradient(180deg, rgba(37, 99, 235, 0.3) 0%, rgba(37, 99, 235, 0.15) 100%);
   border: 1px solid rgba(59, 130, 246, 0.5);
   box-shadow: 0 0 30px rgba(37, 99, 235, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Antigravity Easter Egg */
+@keyframes antigravity-rotate {
+  0% { transform: rotate(0deg); }
+  5% { transform: scale(0.95) rotate(0deg); }
+  15% { transform: scale(0.95) rotate(180deg); }
+  85% { transform: scale(0.95) rotate(180deg); }
+  95% { transform: scale(0.95) rotate(360deg); }
+  100% { transform: scale(1) rotate(360deg); }
+}
+
+.antigravity-active {
+  animation: antigravity-rotate 15s ease-in-out forwards;
+}
+
+.antigravity-active .animate-float,
+.antigravity-active .animate-float-delayed {
+  animation-duration: 2s !important;
+}
+
+html:has(.antigravity-active),
+html:has(.antigravity-active) body {
+  overflow: hidden !important;
 }

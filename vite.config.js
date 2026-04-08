@@ -1,9 +1,31 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['icon.svg'],
+      manifest: {
+        name: 'Шорти.рф - Красивые короткие ссылки',
+        short_name: 'Шорти.рф',
+        description: 'Быстрый, современный и безопасный сервис для сокращения ссылок без рекламы.',
+        theme_color: '#070709',
+        background_color: '#f8fafc',
+        display: 'standalone',
+        icons: [
+          {
+            src: '/icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml'
+          }
+        ]
+      }
+    })
+  ],
   server: {
     proxy: {
       '/short_url': {

@@ -3,17 +3,40 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import ProfilePlaceholder from './pages/ProfilePlaceholder';
 import { LangProvider } from './LangContext';
+import { ThemeProvider, useTheme } from './ThemeContext';
+import { Toaster } from 'sonner';
+
+const AppContent = () => {
+  const { theme } = useTheme();
+  
+  return (
+    <LangProvider>
+      <Toaster 
+        theme={theme} 
+        position="top-center" 
+        expand={true} 
+        richColors 
+        toastOptions={{
+          className: 'font-sans'
+        }}
+      />
+      <div className="relative w-full min-h-screen">
+        <Router>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/profile-placeholder" element={<ProfilePlaceholder />} />
+          </Routes>
+        </Router>
+      </div>
+    </LangProvider>
+  );
+};
 
 const App = () => {
   return (
-    <LangProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/profile-placeholder" element={<ProfilePlaceholder />} />
-        </Routes>
-      </Router>
-    </LangProvider>
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 };
 
