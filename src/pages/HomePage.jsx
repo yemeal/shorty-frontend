@@ -25,10 +25,10 @@ const HomePage = () => {
     return (
         <div className="min-h-screen text-slate-800 dark:text-slate-200 font-sans selection:bg-blue-500/30 relative overflow-hidden transition-colors duration-500">
             {/* Liquid Glass Background Elements */}
-            <div className="fixed top-[-20%] sm:top-[-15%] left-[50%] -translate-x-1/2 w-[300px] sm:w-[800px] h-[300px] sm:h-[400px] rounded-[100%] bg-blue-500/10 dark:bg-blue-500/20 blur-[100px] sm:blur-[140px] pointer-events-none z-0 animate-float-delayed" />
-            <div className="fixed top-[-10%] left-[-10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-blue-500/20 dark:bg-blue-600/30 blur-[100px] sm:blur-[130px] pointer-events-none z-0 animate-float" />
-            <div className="fixed bottom-[-10%] right-[-10%] w-[350px] sm:w-[600px] h-[350px] sm:h-[600px] rounded-full bg-purple-500/10 dark:bg-purple-600/20 blur-[120px] sm:blur-[150px] pointer-events-none z-0 animate-float-delayed" />
-            <div className="fixed top-[30%] left-[40%] w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] rounded-full bg-indigo-500/10 dark:bg-indigo-500/20 blur-[90px] sm:blur-[120px] pointer-events-none z-0 animate-float" />
+            <div className="fixed top-[-20%] sm:top-[-15%] left-[50%] -translate-x-1/2 w-[300px] sm:w-[800px] h-[300px] sm:h-[400px] rounded-[100%] bg-blue-500/10 dark:bg-blue-500/20 blur-[100px] sm:blur-[120px] pointer-events-none z-0 animate-float-delayed transform-gpu will-change-transform" />
+            <div className="fixed top-[-10%] left-[-10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-blue-500/20 dark:bg-blue-600/30 blur-[100px] sm:blur-[120px] pointer-events-none z-0 animate-float transform-gpu will-change-transform" />
+            <div className="fixed bottom-[-10%] right-[-10%] w-[350px] sm:w-[600px] h-[350px] sm:h-[600px] rounded-full bg-purple-500/10 dark:bg-purple-600/20 blur-[100px] sm:blur-[120px] pointer-events-none z-0 animate-float-delayed transform-gpu will-change-transform" />
+            <div className="fixed top-[30%] left-[40%] w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] rounded-full bg-indigo-500/10 dark:bg-indigo-500/20 blur-[90px] sm:blur-[100px] pointer-events-none z-0 animate-float transform-gpu will-change-transform" />
 
             <Header />
 
@@ -57,7 +57,7 @@ const HomePage = () => {
                         { title: t.feat2Title, desc: t.feat2Desc, icon: <CheckCircle2 size={20} className="text-purple-500 dark:text-purple-400" /> },
                         { title: t.feat3Title, desc: t.feat3Desc, icon: <Globe size={20} className="text-indigo-500 dark:text-indigo-400" /> }
                     ].map((item, i) => (
-                        <div key={i} className="bg-white/40 dark:bg-white/5 backdrop-blur-md border border-slate-200/50 dark:border-white/5 p-6 rounded-2xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+                        <div key={i} className="bg-white/40 dark:bg-white/5 backdrop-blur-xl transform-gpu border border-slate-200/50 dark:border-white/5 p-6 rounded-2xl hover:-translate-y-1 transition-all duration-300 group shadow-sm dark:shadow-none preserve-3d">
                             <div className="bg-blue-50 dark:bg-white/5 w-10 h-10 rounded-xl flex items-center justify-center mb-4 border border-blue-100 dark:border-white/5 group-hover:border-blue-200 dark:group-hover:border-white/20 transition-colors">
                                 {item.icon}
                             </div>

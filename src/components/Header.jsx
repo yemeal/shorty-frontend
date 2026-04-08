@@ -16,16 +16,21 @@ const Header = () => {
         layout
         className="flex flex-col mx-auto glass-panel rounded-[2rem] w-[95%] max-w-4xl border-slate-200/20 dark:border-white/10 overflow-hidden"
       >
-        <nav className="flex justify-between items-center h-[60px] sm:h-[70px] px-6 sm:px-8 shrink-0 z-20 bg-transparent">
+        <nav className="flex justify-between items-center h-[75px] sm:h-[90px] px-6 sm:px-8 shrink-0 z-20 bg-transparent">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 sm:gap-4 group cursor-pointer bg-white dark:bg-slate-900 py-2 px-4 sm:px-5 rounded-full border border-slate-200 dark:border-white/5 shadow-md hover:shadow-lg transition-shadow">
-            <div className="relative flex items-center justify-center transition-all duration-500 h-8 w-8 sm:h-10 sm:w-10 shrink-0">
-              <div className="absolute inset-0 bg-blue-500 rounded-xl blur-md opacity-40 dark:opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
-              <img 
-                src="/icon.svg" 
-                alt="Shorty Logo" 
-                className="relative z-10 w-full h-full object-contain group-hover:rotate-[15deg] group-hover:scale-105 transition-all duration-300"
-              />
+          <Link to="/" className="flex items-center gap-3 sm:gap-4 group cursor-pointer bg-white dark:bg-slate-900 py-1.5 px-4 sm:py-2.5 sm:px-6 rounded-full border border-slate-200 dark:border-white/5 shadow-md hover:shadow-lg transition-all duration-300">
+            <div className="relative flex items-center justify-center transition-all duration-500 h-8 w-8 sm:h-9 sm:w-9">
+              {/* Outer pulsing glow */}
+              <div className="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-40 dark:opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300" />
+              
+              {/* Inner breathing container identical to the old padding */}
+              <div className="relative bg-blue-600 shadow-inner shadow-white/20 p-1.5 rounded-full z-10 w-full h-full flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-300">
+                <img 
+                  src="/icon.svg" 
+                  alt="Shorty Logo" 
+                  className="w-full h-full object-cover rounded-full group-hover:rotate-[15deg] transition-all duration-300"
+                />
+              </div>
             </div>
             <span className="font-display font-bold tracking-tight text-slate-800 dark:text-white pr-1 text-base sm:text-lg">
               {t.brand}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Link2, Copy, CheckCircle2, Loader2, ArrowRight, ExternalLink, QrCode, Download, Trash2 } from 'lucide-react';
 import { useLang } from '../LangContext';
 import { useRecentLinks } from '../hooks/useRecentLinks';
@@ -32,7 +32,7 @@ const downloadCanvasAsPNG = (canvasId, defaultFileName) => {
     document.body.removeChild(downloadLink);
 };
 
-const RecentLinkItem = ({ link, t, idx, copyToClipboard }) => {
+const RecentLinkItem = memo(({ link, t, idx, copyToClipboard }) => {
     const [showQR, setShowQR] = useState(false);
     // Делаем уникальный ID для каждого QR
     const qrCanvasId = `qr-recent-${idx}`;
@@ -42,7 +42,7 @@ const RecentLinkItem = ({ link, t, idx, copyToClipboard }) => {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.05 }}
-            className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200/60 dark:border-white/5 rounded-xl p-3 sm:p-4 flex flex-col hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors shadow-sm"
+            className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-lg transform-gpu border border-slate-200/60 dark:border-white/5 rounded-xl p-3 sm:p-4 flex flex-col hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors shadow-sm"
         >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex flex-col overflow-hidden">
@@ -117,7 +117,7 @@ const RecentLinkItem = ({ link, t, idx, copyToClipboard }) => {
             </AnimatePresence>
         </motion.div>
     );
-};
+});
 
 const ShortenForm = () => {
     const { t } = useLang();
@@ -239,11 +239,11 @@ const ShortenForm = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] border border-white/50 dark:border-white/10 shadow-[0_24px_60px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_24px_60px_-10px_rgba(0,0,0,0.5)] rounded-[2rem] p-4 sm:p-8 relative overflow-hidden transition-all duration-300"
+                className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-[2rem] p-4 sm:p-8 relative overflow-hidden transition-all duration-300"
             >
                 <form onSubmit={handleShorten} noValidate className="flex flex-col gap-4 relative z-10">
                     
-                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2 bg-white/80 dark:bg-black/30 backdrop-blur-md rounded-3xl sm:rounded-full p-2 border border-slate-200 dark:border-white/5 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all shadow-[inset_0_2px_15px_rgba(0,0,0,0.05)] dark:shadow-inner">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2 bg-white/80 dark:bg-black/30 backdrop-blur-lg rounded-3xl sm:rounded-full p-2 border border-slate-200 dark:border-white/5 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all shadow-inner">
                         <div className="flex w-full sm:w-auto items-center flex-1 gap-2 sm:gap-3 pl-4 sm:pl-6 py-2 sm:py-0">
                             <Link2 size={24} className="text-blue-500 opacity-80 shrink-0" />
                             <input
@@ -294,9 +294,9 @@ const ShortenForm = () => {
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className="overflow-hidden"
+                                className="overflow-hidden transform-gpu"
                             >
-                                <div className="flex items-center gap-3 bg-white/80 dark:bg-black/30 backdrop-blur-md rounded-2xl p-2 border border-slate-200 dark:border-white/5 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all mt-1 shadow-[inset_0_2px_15px_rgba(0,0,0,0.02)] dark:shadow-inner">
+                                <div className="flex items-center gap-3 bg-white/80 dark:bg-black/30 backdrop-blur-lg rounded-2xl p-2 border border-slate-200 dark:border-white/5 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all mt-1 shadow-inner">
                                     <span className="text-slate-400 dark:text-slate-500 pl-4 font-mono select-none">шорти.рф/</span>
                                     <input
                                         type="text"

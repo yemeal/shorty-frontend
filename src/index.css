@@ -12,6 +12,7 @@
 html {
   background-color: #f8fafc;
   color: #0f172a;
+  scrollbar-gutter: stable;
 }
 
 html.dark {
