@@ -5,7 +5,8 @@ import { translations } from '../App.jsx';
 const reservedWords = ['docs','redoc','openapi.json','short_url','api','admin','апи','админ'];
 const slugRegex = /^[a-zA-Zа-яА-ЯёЁ0-9_-]+$/;
 
-const ShortenForm = ({ lang }) => {
+const ShortenForm = () => {
+  const lang = 'en'; // placeholder, will be overridden by HeaderWrapper
   const t = translations[lang];
   const [longUrl, setLongUrl] = useState('');
   const [slugEnabled, setSlugEnabled] = useState(false);
