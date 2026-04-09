@@ -87,8 +87,10 @@ const RecentLinkItem = memo(({ link, t, idx, copyToClipboard }) => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden border-t border-slate-200/50 dark:border-white/10 mt-3 pt-3 flex flex-col items-center gap-3"
+                        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                        className="overflow-hidden flex flex-col items-center gap-3"
                     >
+                        <div className="w-full border-t border-slate-200/50 dark:border-white/10 mt-3 pt-3 flex flex-col items-center gap-3">
                         <div className="p-2 bg-white rounded-lg shadow-sm">
                             <QRCodeCanvas
                                 id={qrCanvasId}
@@ -112,6 +114,7 @@ const RecentLinkItem = memo(({ link, t, idx, copyToClipboard }) => {
                             <Download size={14} />
                             {t.downloadQRBtn}
                         </button>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -236,14 +239,18 @@ const ShortenForm = () => {
     return (
         <div className="w-full max-w-2xl relative z-10 mb-16 sm:mb-20 px-2 sm:px-0 mx-auto">
             <motion.div 
+                layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-[2rem] p-4 sm:p-8 relative overflow-hidden transition-all duration-300"
+                transition={{ 
+                    duration: 0.5,
+                    layout: { duration: 0.4, ease: [0.23, 1, 0.32, 1] }
+                }}
+                className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-[2rem] p-4 sm:p-8 relative overflow-hidden transition-shadow duration-300"
             >
-                <form onSubmit={handleShorten} noValidate className="flex flex-col gap-4 relative z-10">
+                <motion.form layout onSubmit={handleShorten} noValidate className="flex flex-col relative z-10">
                     
-                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2 bg-white/80 dark:bg-black/30 backdrop-blur-lg rounded-3xl sm:rounded-full p-2 border border-slate-200 dark:border-white/5 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all shadow-inner">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2 bg-white/80 dark:bg-black/40 backdrop-blur-md rounded-3xl sm:rounded-full p-2 border border-slate-200 dark:border-white/5 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all shadow-inner mb-4">
                         <div className="flex w-full sm:w-auto items-center flex-1 gap-2 sm:gap-3 pl-4 sm:pl-6 py-2 sm:py-0">
                             <Link2 size={24} className="text-blue-500 opacity-80 shrink-0" />
                             <input
@@ -272,7 +279,7 @@ const ShortenForm = () => {
                     </div>
 
                     {/* Checkbox for custom link */}
-                    <div className="flex items-center justify-end w-full px-4 gap-3">
+                    <div className="flex items-center justify-end w-full px-4 gap-3 mb-2">
                         <span id="custom-slug-label" className="text-sm text-slate-600 dark:text-slate-400 font-medium cursor-pointer select-none transition-colors" onClick={handleCustomSlugToggle}>
                             {t.customSlugLabel}
                         </span>
@@ -294,34 +301,38 @@ const ShortenForm = () => {
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
                                 className="overflow-hidden transform-gpu"
                             >
-                                <div className="flex items-center gap-3 bg-white/80 dark:bg-black/30 backdrop-blur-lg rounded-2xl p-2 border border-slate-200 dark:border-white/5 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all mt-1 shadow-inner">
-                                    <span className="text-slate-400 dark:text-slate-500 pl-4 font-mono select-none">шорти.рф/</span>
-                                    <input
-                                        type="text"
-                                        maxLength="30"
-                                        aria-label={t.customSlugLabel}
-                                        placeholder={t.customSlugPlaceholder}
-                                        className="flex-1 w-full bg-transparent py-2 focus:outline-none text-blue-600 dark:text-blue-300 text-sm sm:text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 font-mono tracking-wide"
-                                        value={customSlug}
-                                        onChange={(e) => setCustomSlug(e.target.value)}
-                                    />
+                                <div className="pt-2 pb-4">
+                                    <div className="flex items-center gap-3 bg-white/80 dark:bg-black/30 backdrop-blur-lg rounded-2xl p-2 border border-slate-200 dark:border-white/5 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all shadow-inner">
+                                        <span className="text-slate-400 dark:text-slate-500 pl-4 font-mono select-none">шорти.рф/</span>
+                                        <input
+                                            type="text"
+                                            maxLength="30"
+                                            aria-label={t.customSlugLabel}
+                                            placeholder={t.customSlugPlaceholder}
+                                            className="flex-1 w-full bg-transparent py-2 focus:outline-none text-blue-600 dark:text-blue-300 text-sm sm:text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 font-mono tracking-wide"
+                                            value={customSlug}
+                                            onChange={(e) => setCustomSlug(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </form>
+                </motion.form>
 
                 {/* Результат */}
                 <AnimatePresence>
                     {shortUrl && (
-                        <motion.div 
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: -20, opacity: 0 }}
-                            className="mt-8 p-6 bg-slate-50 dark:bg-[#0A0A0E] border border-blue-200 dark:border-blue-500/30 rounded-2xl shadow-sm dark:shadow-[0_0_30px_rgba(37,99,235,0.1)] relative overflow-hidden transition-colors"
-                        >
+                        <div className="mt-8">
+                            <motion.div 
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: -20, opacity: 0 }}
+                                className="p-6 bg-slate-50 dark:bg-[#0A0A0E] border border-blue-200 dark:border-blue-500/30 rounded-2xl shadow-sm dark:shadow-[0_0_30px_rgba(37,99,235,0.1)] relative overflow-hidden"
+                            >
                             <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-indigo-500" />
                             <div className="flex flex-col md:flex-row items-center justify-between gap-5 pl-2">
                                 <div className="flex flex-col w-full overflow-hidden">
@@ -367,8 +378,10 @@ const ShortenForm = () => {
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: 'auto', opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
-                                        className="overflow-hidden border-t border-slate-200 dark:border-white/10 mt-5 pt-5 flex flex-col items-center gap-4"
+                                        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                                        className="overflow-hidden flex flex-col items-center gap-4"
                                     >
+                                        <div className="w-full border-t border-slate-200 dark:border-white/10 mt-5 pt-5 flex flex-col items-center gap-4">
                                         <div className="p-3 bg-white rounded-xl shadow-sm">
                                             <QRCodeCanvas
                                                 id="qr-code-canvas-main"
@@ -394,10 +407,12 @@ const ShortenForm = () => {
                                             <Download size={16} />
                                             {t.downloadQRBtn}
                                         </button>
+                                        </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
-                        </motion.div>
+                            </motion.div>
+                        </div>
                     )}
                 </AnimatePresence>
             </motion.div>
