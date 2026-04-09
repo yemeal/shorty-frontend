@@ -79,8 +79,8 @@ html.dark body {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
+  will-change: backdrop-filter;
+  pointer-events: none;
 }
 
 
@@ -196,4 +196,4 @@ html:has(.antigravity-active) body {
 
 .perspective-1000 {
   perspective: 1000px;
-}
+}

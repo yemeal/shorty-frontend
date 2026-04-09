@@ -12,9 +12,7 @@ const Header = () => {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 sm:pt-6">
-      <motion.div 
-        className="flex flex-col mx-auto glass-panel rounded-3xl w-[95%] max-w-4xl border-slate-200/20 dark:border-white/10 overflow-hidden relative"
-      >
+      <div className="flex flex-col mx-auto glass-panel rounded-3xl w-[95%] max-w-4xl border-slate-200/20 dark:border-white/10 overflow-hidden relative">
         <nav className="flex justify-between items-center h-[75px] sm:h-[90px] px-6 sm:px-8 shrink-0 z-20 bg-transparent">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 sm:gap-4 group cursor-pointer bg-white dark:bg-slate-900 py-1.5 px-4 sm:py-2.5 sm:px-6 rounded-full border border-slate-200 dark:border-white/5 shadow-md hover:shadow-lg transition-all duration-300">
@@ -118,7 +116,7 @@ const Header = () => {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
     </div>
   );
 };
