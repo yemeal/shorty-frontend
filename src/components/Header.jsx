@@ -13,8 +13,7 @@ const Header = () => {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 sm:pt-6">
       <motion.div 
-        layout
-        className="flex flex-col mx-auto glass-panel rounded-3xl w-[95%] max-w-4xl border-slate-200/20 dark:border-white/10 overflow-hidden"
+        className="flex flex-col mx-auto glass-panel rounded-3xl w-[95%] max-w-4xl border-slate-200/20 dark:border-white/10 overflow-hidden relative"
       >
         <nav className="flex justify-between items-center h-[75px] sm:h-[90px] px-6 sm:px-8 shrink-0 z-20 bg-transparent">
           {/* Logo */}
