@@ -8,22 +8,27 @@ import { Toaster } from 'sonner';
 
 const AppContent = () => {
   const { theme } = useTheme();
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 640);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   return (
     <LangProvider>
       <Toaster 
         theme={theme} 
-        position="bottom-center" 
+        position={isMobile ? "top-center" : "bottom-right"} 
         expand={true} 
+        visibleToasts={3}
         richColors 
         toastOptions={{
-          className: 'font-sans p-4 sm:p-6',
+          className: 'font-sans',
           style: {
-            fontSize: 'var(--toast-font-size, 0.95rem)',
-            padding: 'var(--toast-padding, 1rem)',
             borderRadius: '1.25rem',
-            minWidth: 'var(--toast-min-width, 280px)',
-            maxWidth: '90vw'
+            fontSize: '0.9rem',
           }
         }}
       />

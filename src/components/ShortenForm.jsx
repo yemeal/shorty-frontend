@@ -56,11 +56,11 @@ const RecentLinkItem = memo(({ link, t, idx }) => {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.05 }}
-            className="group bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-2xl p-4 flex flex-col hover:bg-white/25 dark:hover:bg-white/10 transition-all duration-300 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)]"
+            className="group bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col hover:bg-white/25 dark:hover:bg-white/10 transition-all duration-300 shadow-md"
         >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4">
                 <div className="flex flex-col overflow-hidden">
-                    <span className="text-blue-600 dark:text-blue-400 font-mono text-sm sm:text-base font-bold truncate">
+                    <span className="text-blue-600 dark:text-blue-400 font-mono text-xs sm:text-base font-bold truncate">
                         {link.shortUrl}
                     </span>
                     <span className="text-slate-500 dark:text-slate-400 text-xs truncate max-w-[280px] sm:max-w-md">
@@ -150,6 +150,7 @@ const ShortenForm = () => {
     const [isCopied, setIsCopied] = useState(false);
     const [showQR, setShowQR] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [errorField, setErrorField] = useState(null); // 'long_url' | 'slug' | null
 
     // Custom Slug State
     const [isCustomSlug, setIsCustomSlug] = useState(false);
@@ -160,8 +161,10 @@ const ShortenForm = () => {
 
     const handleShorten = async (e) => {
         e.preventDefault();
+        setErrorField(null);
         if (!longUrl.trim()) {
             toast.error(t.errorEmpty);
+            setErrorField('long_url');
             return;
         }
 
@@ -175,6 +178,7 @@ const ShortenForm = () => {
             const errCode = validateSlug(customSlug);
             if (errCode) {
                 toast.error(t[errCode]);
+                setErrorField('slug');
                 return;
             }
             payload.slug = customSlug;
@@ -195,6 +199,7 @@ const ShortenForm = () => {
 
             if (!response.ok) {
                 if (response.status === 409) {
+                    setErrorField('slug');
                     throw new Error(t.slugErrorTaken);
                 }
 
@@ -206,6 +211,7 @@ const ShortenForm = () => {
                         errorMessage = errData.detail[0].msg;
                         if (errorMessage.includes("URL") || errorMessage.includes("url")) {
                             errorMessage = t.errorEmpty;
+                            setErrorField('long_url');
                         }
                     } else {
                         errorMessage = errData.detail;
@@ -258,9 +264,8 @@ const ShortenForm = () => {
     };
 
     return (
-        <div className="w-full max-w-2xl relative z-10 mb-16 sm:mb-20 px-2 sm:px-0 mx-auto">
+        <div className="w-full max-w-2xl relative z-10 mb-4 sm:mb-20 px-2 sm:px-0 mx-auto">
             <motion.div
-                layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
@@ -269,18 +274,25 @@ const ShortenForm = () => {
                 }}
                 className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-8 relative overflow-hidden transition-shadow duration-300"
             >
-                <motion.form layout onSubmit={handleShorten} noValidate className="flex flex-col relative z-10">
+                <motion.form onSubmit={handleShorten} noValidate className="flex flex-col relative z-10">
 
-                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2 bg-white/20 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all shadow-[inset_0_2px_12px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_10px_0_rgba(255,255,255,0.05)] mb-8">
+                    <div className={`flex flex-col sm:flex-row items-center gap-3 sm:gap-2 bg-white/20 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border transition-all shadow-[inset_0_2px_12px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_10px_0_rgba(255,255,255,0.05)] mb-8 ${
+                        errorField === 'long_url' 
+                        ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] bg-red-500/5' 
+                        : 'border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 focus-within:border-blue-400 dark:focus-within:border-blue-500/30'
+                    }`}>
                         <div className="flex w-full sm:w-auto items-center flex-1 gap-2 sm:gap-4 pl-4 sm:pl-8 py-2 sm:py-0">
-                            <Link2 size={22} className="text-blue-500 opacity-90 shrink-0" />
+                            <Link2 size={22} className={`${errorField === 'long_url' ? 'text-red-400' : 'text-blue-500'} opacity-90 shrink-0`} />
                             <input
                                 type="url"
                                 placeholder={t.placeholder}
                                 aria-label={t.placeholder}
                                 className="flex-1 w-full bg-transparent py-3 focus:outline-none text-slate-800 dark:text-white text-[14px] sm:text-base placeholder:text-slate-400 dark:placeholder:text-slate-500 font-mono tracking-normal"
                                 value={longUrl}
-                                onChange={(e) => setLongUrl(e.target.value)}
+                                onChange={(e) => {
+                                    setLongUrl(e.target.value);
+                                    if(errorField === 'long_url') setErrorField(null);
+                                }}
                             />
                         </div>
                         <motion.button
@@ -345,7 +357,11 @@ const ShortenForm = () => {
                                 className="overflow-hidden transform-gpu"
                             >
                                 <div className="pt-2 pb-6">
-                                    <div className="flex items-center gap-3 bg-white/15 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border border-white/20 dark:border-white/5 border-t-white/30 transition-all shadow-inner">
+                                    <div className={`flex items-center gap-3 bg-white/15 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border transition-all shadow-inner ${
+                                        errorField === 'slug' 
+                                        ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] bg-red-500/5' 
+                                        : 'border-white/20 dark:border-white/5 border-t-white/30'
+                                    }`}>
                                         <span className="text-slate-400 dark:text-slate-500 pl-4 font-mono select-none">шорти.рф/</span>
                                         <input
                                             type="text"
@@ -354,7 +370,10 @@ const ShortenForm = () => {
                                             placeholder={t.customSlugPlaceholder}
                                             className="flex-1 w-full bg-transparent py-3 focus:outline-none text-blue-600 dark:text-blue-300 text-base sm:text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 font-mono tracking-wider"
                                             value={customSlug}
-                                            onChange={(e) => setCustomSlug(e.target.value)}
+                                            onChange={(e) => {
+                                                setCustomSlug(e.target.value);
+                                                if(errorField === 'slug') setErrorField(null);
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -369,7 +388,7 @@ const ShortenForm = () => {
                         <motion.div 
                             initial={{ y: 30, opacity: 0, scale: 0.95 }}
                             animate={{ y: 0, opacity: 1, scale: 1 }}
-                            className="mt-10 p-8 bg-white/20 dark:bg-white/5 backdrop-blur-[35px] border border-white/40 dark:border-white/10 rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative overflow-hidden"
+                            className="mt-4 sm:mt-10 p-4 sm:p-8 bg-white/20 dark:bg-white/5 backdrop-blur-[35px] border border-white/40 dark:border-white/10 rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative overflow-hidden"
                         >
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 opacity-50" />
                             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
@@ -502,10 +521,10 @@ const ShortenForm = () => {
                                 {showHistory && (
                                     <motion.div
                                         initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                                        animate={{ height: "auto", opacity: 1, marginTop: 24 }}
+                                        animate={{ height: "auto", opacity: 1, marginTop: 16 }}
                                         exit={{ height: 0, opacity: 0, marginTop: 0 }}
                                         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                                        className="overflow-hidden w-full px-2 sm:px-6"
+                                        className="overflow-hidden w-full px-1 sm:px-6"
                                     >
                                         <div className="flex items-center justify-between mb-4 px-2">
                                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400/60">
