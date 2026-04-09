@@ -77,14 +77,16 @@ html.dark body {
   inset: 0;
   z-index: -1;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
+  /* Keep unprefixed property present for Chromium/Firefox */
+  backdrop-filter: blur(40px);
   will-change: backdrop-filter;
   pointer-events: none;
 }
 
 @supports ((backdrop-filter: blur(0)) or (-webkit-backdrop-filter: blur(0))) {
   .glass-panel::before {
-    backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
+    backdrop-filter: blur(40px);
   }
 }
 
