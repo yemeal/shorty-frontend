@@ -9,6 +9,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
+      workbox: {
+        // Запрещаем Service Worker перехватывать навигацию по путям, которые не имеют точек (короткие ссылки)
+        navigateFallbackDenylist: [/^\/[^.]+$/],
+      },
       manifest: {
         name: 'Шорти.рф - Красивые короткие ссылки',
         short_name: 'Шорти.рф',

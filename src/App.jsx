@@ -25,11 +25,19 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/profile-placeholder" element={<ProfilePlaceholder />} />
+            <Route path="*" element={<ForceServerRedirect />} />
           </Routes>
         </Router>
       </div>
     </LangProvider>
   );
+};
+
+const ForceServerRedirect = () => {
+  React.useEffect(() => {
+    window.location.reload();
+  }, []);
+  return null;
 };
 
 const App = () => {

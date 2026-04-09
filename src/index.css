@@ -65,17 +65,33 @@ html.dark body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-30px) scale(1.05); }
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-30px) scale(1.05);
+  }
 }
+
 @keyframes float-reverse {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(30px) scale(0.95); }
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(30px) scale(0.95);
+  }
 }
 
 .animate-float {
   animation: float 15s ease-in-out infinite;
 }
+
 .animate-float-delayed {
   animation: float-reverse 20s ease-in-out infinite;
   animation-delay: 2s;
@@ -97,12 +113,29 @@ html.dark body {
 
 /* Antigravity Easter Egg */
 @keyframes antigravity-rotate {
-  0% { transform: rotate(0deg); }
-  5% { transform: scale(0.95) rotate(0deg); }
-  15% { transform: scale(0.95) rotate(180deg); }
-  85% { transform: scale(0.95) rotate(180deg); }
-  95% { transform: scale(0.95) rotate(360deg); }
-  100% { transform: scale(1) rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  5% {
+    transform: scale(0.95) rotate(0deg);
+  }
+
+  15% {
+    transform: scale(0.95) rotate(180deg);
+  }
+
+  85% {
+    transform: scale(0.95) rotate(180deg);
+  }
+
+  95% {
+    transform: scale(0.95) rotate(360deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(360deg);
+  }
 }
 
 .antigravity-active {
