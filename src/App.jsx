@@ -13,11 +13,18 @@ const AppContent = () => {
     <LangProvider>
       <Toaster 
         theme={theme} 
-        position="top-center" 
+        position="bottom-center" 
         expand={true} 
         richColors 
         toastOptions={{
-          className: 'font-sans'
+          className: 'font-sans p-4 sm:p-6',
+          style: {
+            fontSize: 'var(--toast-font-size, 0.95rem)',
+            padding: 'var(--toast-padding, 1rem)',
+            borderRadius: '1.25rem',
+            minWidth: 'var(--toast-min-width, 280px)',
+            maxWidth: '90vw'
+          }
         }}
       />
       <div className="relative w-full min-h-screen">

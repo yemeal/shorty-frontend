@@ -51,18 +51,18 @@ const HomePage = () => {
                 <ShortenForm />
 
                 {/* Статистика / Фичи */}
-                <div className="grid md:grid-cols-3 gap-6 w-full max-w-4xl pt-10 border-t border-slate-200 dark:border-white/5 relative z-10">
+                <div className="grid md:grid-cols-3 gap-6 w-full max-w-4xl pt-12 border-t-2 border-slate-300/30 dark:border-white/5 relative z-10">
                     {[
-                        { title: t.feat1Title, desc: t.feat1Desc, icon: <Zap size={20} className="text-blue-500 dark:text-blue-400" /> },
-                        { title: t.feat2Title, desc: t.feat2Desc, icon: <CheckCircle2 size={20} className="text-purple-500 dark:text-purple-400" /> },
-                        { title: t.feat3Title, desc: t.feat3Desc, icon: <Globe size={20} className="text-indigo-500 dark:text-indigo-400" /> }
+                        { title: t.feat1Title, desc: t.feat1Desc, icon: <Zap size={22} className="text-blue-500/80 dark:text-blue-400" /> },
+                        { title: t.feat2Title, desc: t.feat2Desc, icon: <CheckCircle2 size={22} className="text-indigo-500/80 dark:text-indigo-400" /> },
+                        { title: t.feat3Title, desc: t.feat3Desc, icon: <Globe size={22} className="text-purple-500/80 dark:text-purple-400" /> }
                     ].map((item, i) => (
-                        <div key={i} className="bg-white/40 dark:bg-white/5 backdrop-blur-xl transform-gpu border border-slate-200/50 dark:border-white/5 p-6 rounded-2xl hover:-translate-y-1 transition-all duration-300 group shadow-sm dark:shadow-none preserve-3d">
-                            <div className="bg-blue-50 dark:bg-white/5 w-10 h-10 rounded-xl flex items-center justify-center mb-4 border border-blue-100 dark:border-white/5 group-hover:border-blue-200 dark:group-hover:border-white/20 transition-colors">
+                        <div key={i} className="group bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 p-8 rounded-3xl hover:-translate-y-2 transition-all duration-500 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.1)]">
+                            <div className="bg-gradient-to-br from-white/10 to-transparent w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border border-white/40 dark:border-white/5 shadow-sm group-hover:scale-110 group-hover:rotate-[5deg] transition-all duration-500">
                                 {item.icon}
                             </div>
-                            <h3 className="font-display font-bold text-slate-900 dark:text-white mb-2 text-lg transition-colors">{item.title}</h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed transition-colors">{item.desc}</p>
+                            <h3 className="font-display font-bold text-slate-900 dark:text-white mb-3 text-xl tracking-tight transition-colors">{item.title}</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed transition-colors font-medium">{item.desc}</p>
                         </div>
                     ))}
                 </div>
@@ -73,7 +73,7 @@ const HomePage = () => {
                     href="https://github.com/yemeal/shorty"
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200/60 dark:border-white/10 hover:bg-slate-200/50 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    className="flex items-center gap-2 px-4 py-2 rounded-2xl border border-slate-200/60 dark:border-white/10 hover:bg-slate-200/50 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 >
                     <GithubIcon size={16} />
                     <span>GitHub</span>

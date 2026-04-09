@@ -32,43 +32,62 @@ const downloadCanvasAsPNG = (canvasId, defaultFileName) => {
     document.body.removeChild(downloadLink);
 };
 
-const RecentLinkItem = memo(({ link, t, idx, copyToClipboard }) => {
+const RecentLinkItem = memo(({ link, t, idx }) => {
     const [showQR, setShowQR] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
     // Делаем уникальный ID для каждого QR
     const qrCanvasId = `qr-recent-${idx}`;
 
+    const handleCopy = () => {
+        const el = document.createElement('textarea');
+        el.value = link.shortUrl;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+        toast.success(t.copySuccess);
+    };
+
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.05 }}
-            className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-lg transform-gpu border border-slate-200/60 dark:border-white/5 rounded-xl p-3 sm:p-4 flex flex-col hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors shadow-sm"
+            className="group bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-2xl p-4 flex flex-col hover:bg-white/25 dark:hover:bg-white/10 transition-all duration-300 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)]"
         >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex flex-col overflow-hidden">
-                    <span className="text-blue-600 dark:text-blue-400 font-mono text-sm sm:text-base font-semibold truncate">
+                    <span className="text-blue-600 dark:text-blue-400 font-mono text-sm sm:text-base font-bold truncate">
                         {link.shortUrl}
                     </span>
-                    <span className="text-slate-500 dark:text-slate-400 text-xs truncate max-w-full">
+                    <span className="text-slate-500 dark:text-slate-400 text-xs truncate max-w-[280px] sm:max-w-md">
                         {link.original}
                     </span>
                 </div>
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                    <button
+                <div className="flex items-center gap-2 shrink-0">
+                    <motion.button
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => setShowQR(!showQR)}
-                        title="QR-Код"
-                        className="p-2 cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-colors text-slate-600 dark:text-slate-300"
+                        className="p-2.5 cursor-pointer bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/10 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors text-slate-600 dark:text-slate-300"
                     >
-                        <QrCode size={14} />
-                    </button>
-                    <button
-                        onClick={() => copyToClipboard(link.shortUrl)}
+                        <QrCode size={16} />
+                    </motion.button>
+                    <motion.button
+                        whileTap={{ scale: 0.92 }}
+                        onClick={handleCopy}
                         title={t.copyBtn}
-                        className="p-2 cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-colors text-slate-600 dark:text-slate-300"
+                        className={`p-2 cursor-pointer border rounded-lg transition-all ${isCopied
+                            ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500'
+                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-blue-400 dark:hover:border-blue-500'
+                            }`}
                     >
-                        <Copy size={14} />
-                    </button>
-                    <a
+                        {isCopied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+                    </motion.button>
+                    <motion.a
+                        whileTap={{ scale: 0.92 }}
                         href={`${window.location.protocol}//${link.shortUrl}`}
                         target="_blank"
                         rel="noreferrer"
@@ -76,14 +95,14 @@ const RecentLinkItem = memo(({ link, t, idx, copyToClipboard }) => {
                         className="p-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-300"
                     >
                         <ExternalLink size={14} />
-                    </a>
+                    </motion.a>
                 </div>
             </div>
 
             {/* QR Code Expansion for Recent Link */}
             <AnimatePresence>
                 {showQR && (
-                    <motion.div 
+                    <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -91,29 +110,30 @@ const RecentLinkItem = memo(({ link, t, idx, copyToClipboard }) => {
                         className="overflow-hidden flex flex-col items-center gap-3"
                     >
                         <div className="w-full border-t border-slate-200/50 dark:border-white/10 mt-3 pt-3 flex flex-col items-center gap-3">
-                        <div className="p-2 bg-white rounded-lg shadow-sm">
-                            <QRCodeCanvas
-                                id={qrCanvasId}
-                                value={`${window.location.protocol}//${link.shortUrl}`}
-                                size={120}
-                                bgColor={"#ffffff"}
-                                fgColor={"#0f172a"}
-                                level={"Q"}
-                                imageSettings={{
-                                    src: "/icon.svg",
-                                    height: 28,
-                                    width: 28,
-                                    excavate: true,
-                                }}
-                            />
-                        </div>
-                        <button 
-                            onClick={() => downloadCanvasAsPNG(qrCanvasId, `shorty-qr-${idx}.png`)}
-                            className="flex items-center gap-2 cursor-pointer text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                        >
-                            <Download size={14} />
-                            {t.downloadQRBtn}
-                        </button>
+                            <div className="p-2 bg-white rounded-lg shadow-sm">
+                                <QRCodeCanvas
+                                    id={qrCanvasId}
+                                    value={`${window.location.protocol}//${link.shortUrl}`}
+                                    size={120}
+                                    bgColor={"#ffffff"}
+                                    fgColor={"#0f172a"}
+                                    level={"Q"}
+                                    imageSettings={{
+                                        src: "/icon.svg",
+                                        height: 28,
+                                        width: 28,
+                                        excavate: true,
+                                    }}
+                                />
+                            </div>
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => downloadCanvasAsPNG(qrCanvasId, `shorty-qr-${idx}.png`)}
+                                className="flex items-center gap-2 cursor-pointer text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                            >
+                                <Download size={14} />
+                                {t.downloadQRBtn}
+                            </motion.button>
                         </div>
                     </motion.div>
                 )}
@@ -129,7 +149,8 @@ const ShortenForm = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const [showQR, setShowQR] = useState(false);
-    
+    const [showHistory, setShowHistory] = useState(false);
+
     // Custom Slug State
     const [isCustomSlug, setIsCustomSlug] = useState(false);
     const [customSlug, setCustomSlug] = useState('');
@@ -143,7 +164,7 @@ const ShortenForm = () => {
             toast.error(t.errorEmpty);
             return;
         }
-        
+
         let payload = { long_url: longUrl.trim() };
 
         if (!/^https?:\/\//i.test(payload.long_url)) {
@@ -179,7 +200,7 @@ const ShortenForm = () => {
 
                 const errData = await response.json();
                 let errorMessage = t.errorGeneric;
-                
+
                 if (errData.detail) {
                     if (Array.isArray(errData.detail)) {
                         errorMessage = errData.detail[0].msg;
@@ -199,7 +220,7 @@ const ShortenForm = () => {
             const generatedUrl = `${originHost}/${data.short_url}`;
             setShortUrl(generatedUrl);
             toast.success("Готово!", { description: 'Ссылка успешно сокращена.' });
-            
+
             // Add to history
             addLink({
                 original: payload.long_url,
@@ -223,8 +244,8 @@ const ShortenForm = () => {
         document.body.removeChild(el);
 
         if (textToCopy === shortUrl) {
-           setIsCopied(true);
-           setTimeout(() => setIsCopied(false), 2000);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
         }
         toast.success(t.copySuccess);
     };
@@ -238,44 +259,62 @@ const ShortenForm = () => {
 
     return (
         <div className="w-full max-w-2xl relative z-10 mb-16 sm:mb-20 px-2 sm:px-0 mx-auto">
-            <motion.div 
+            <motion.div
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ 
+                transition={{
                     duration: 0.5,
                     layout: { duration: 0.4, ease: [0.23, 1, 0.32, 1] }
                 }}
-                className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-[2rem] p-4 sm:p-8 relative overflow-hidden transition-shadow duration-300"
+                className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-8 relative overflow-hidden transition-shadow duration-300"
             >
                 <motion.form layout onSubmit={handleShorten} noValidate className="flex flex-col relative z-10">
-                    
-                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2 bg-white/80 dark:bg-black/40 backdrop-blur-md rounded-3xl sm:rounded-full p-2 border border-slate-200 dark:border-white/5 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all shadow-inner mb-4">
-                        <div className="flex w-full sm:w-auto items-center flex-1 gap-2 sm:gap-3 pl-4 sm:pl-6 py-2 sm:py-0">
-                            <Link2 size={24} className="text-blue-500 opacity-80 shrink-0" />
+
+                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2 bg-white/20 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all shadow-[inset_0_2px_12px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_10px_0_rgba(255,255,255,0.05)] mb-8">
+                        <div className="flex w-full sm:w-auto items-center flex-1 gap-2 sm:gap-4 pl-4 sm:pl-8 py-2 sm:py-0">
+                            <Link2 size={22} className="text-blue-500 opacity-90 shrink-0" />
                             <input
                                 type="url"
                                 placeholder={t.placeholder}
                                 aria-label={t.placeholder}
-                                className="flex-1 w-full bg-transparent py-2 focus:outline-none text-slate-800 dark:text-white text-sm sm:text-lg placeholder:text-slate-400 dark:placeholder:text-slate-500 font-mono tracking-wide"
+                                className="flex-1 w-full bg-transparent py-3 focus:outline-none text-slate-800 dark:text-white text-[14px] sm:text-base placeholder:text-slate-400 dark:placeholder:text-slate-500 font-mono tracking-normal"
                                 value={longUrl}
                                 onChange={(e) => setLongUrl(e.target.value)}
                             />
                         </div>
-                        <button
+                        <motion.button
+                            whileTap={{ scale: 0.96 }}
+                            whileHover={{ scale: 1.02 }}
                             disabled={isLoading}
                             aria-label={t.shortenBtn}
-                            className="w-full sm:w-auto cursor-pointer bg-gradient-to-b from-blue-500/90 to-blue-600/90 dark:from-blue-600/20 dark:to-blue-600/10 backdrop-blur-md border border-blue-500/30 text-white font-display font-bold px-8 py-3.5 sm:py-0 sm:h-14 rounded-2xl sm:rounded-full transition-all flex items-center justify-center gap-2 group/btn active:scale-[0.97] shrink-0 shadow-md dark:shadow-[0_0_20px_rgba(37,99,235,0.1)] hover:from-blue-500 hover:to-blue-600 dark:hover:from-blue-600/30 dark:hover:to-blue-600/15"
+                            className="w-full sm:w-auto cursor-pointer bg-blue-500/15 dark:bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 dark:border-blue-400/40 border-t-blue-400/20 dark:border-t-white/20 text-blue-600 dark:text-white font-display font-black px-8 py-4 sm:py-0 sm:h-14 rounded-3xl sm:rounded-full transition-all flex items-center justify-center gap-2 group/btn active:scale-[0.97] shrink-0 shadow-xl dark:shadow-[0_0_25px_rgba(37,99,235,0.15)] overflow-hidden relative"
                         >
                             {isLoading ? (
-                                <Loader2 className="animate-spin text-white/70" />
+                                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
+                                    <Loader2 className="text-white/70" />
+                                </motion.div>
                             ) : (
-                                <>
-                                    {t.shortenBtn}
-                                    <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
-                                </>
+                                <div className="relative z-10 flex items-center gap-2">
+                                    <span className="text-base sm:text-lg">{t.shortenBtn}</span>
+                                    <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform shrink-0" />
+                                </div>
                             )}
-                        </button>
+
+                            {/* Slow Liquid Shimmer Reflection - Brand Gradient Color */}
+                            <motion.div
+                                className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/40 via-indigo-500/50 via-purple-400/40 to-transparent -skew-x-[20deg] blur-md"
+                                animate={{
+                                    x: ['-100%', '200%']
+                                }}
+                                transition={{
+                                    repeat: Infinity,
+                                    duration: 6,
+                                    ease: "linear",
+                                    repeatDelay: 0.5
+                                }}
+                            />
+                        </motion.button>
                     </div>
 
                     {/* Checkbox for custom link */}
@@ -283,7 +322,8 @@ const ShortenForm = () => {
                         <span id="custom-slug-label" className="text-sm text-slate-600 dark:text-slate-400 font-medium cursor-pointer select-none transition-colors" onClick={handleCustomSlugToggle}>
                             {t.customSlugLabel}
                         </span>
-                        <button 
+                        <motion.button
+                            whileTap={{ scale: 0.92 }}
                             type="button"
                             onClick={handleCustomSlugToggle}
                             aria-labelledby="custom-slug-label"
@@ -291,28 +331,28 @@ const ShortenForm = () => {
                             className={`w-11 h-6 cursor-pointer rounded-full relative transition-colors duration-300 focus:outline-none ${isCustomSlug ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-700'}`}
                         >
                             <div className={`w-4 h-4 rounded-full bg-white absolute top-1 left-1 transition-transform duration-300 shadow-sm ${isCustomSlug ? 'translate-x-5' : 'translate-x-0'}`} />
-                        </button>
+                        </motion.button>
                     </div>
 
                     {/* Custom Slug Input */}
                     <AnimatePresence>
                         {isCustomSlug && (
-                            <motion.div 
+                            <motion.div
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
                                 transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
                                 className="overflow-hidden transform-gpu"
                             >
-                                <div className="pt-2 pb-4">
-                                    <div className="flex items-center gap-3 bg-white/80 dark:bg-black/30 backdrop-blur-lg rounded-2xl p-2 border border-slate-200 dark:border-white/5 focus-within:border-blue-400 dark:focus-within:border-blue-500/30 transition-all shadow-inner">
+                                <div className="pt-2 pb-6">
+                                    <div className="flex items-center gap-3 bg-white/15 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border border-white/20 dark:border-white/5 border-t-white/30 transition-all shadow-inner">
                                         <span className="text-slate-400 dark:text-slate-500 pl-4 font-mono select-none">шорти.рф/</span>
                                         <input
                                             type="text"
                                             maxLength="30"
                                             aria-label={t.customSlugLabel}
                                             placeholder={t.customSlugPlaceholder}
-                                            className="flex-1 w-full bg-transparent py-2 focus:outline-none text-blue-600 dark:text-blue-300 text-sm sm:text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 font-mono tracking-wide"
+                                            className="flex-1 w-full bg-transparent py-3 focus:outline-none text-blue-600 dark:text-blue-300 text-base sm:text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 font-mono tracking-wider"
                                             value={customSlug}
                                             onChange={(e) => setCustomSlug(e.target.value)}
                                         />
@@ -326,15 +366,13 @@ const ShortenForm = () => {
                 {/* Результат */}
                 <AnimatePresence>
                     {shortUrl && (
-                        <div className="mt-8">
-                            <motion.div 
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                exit={{ y: -20, opacity: 0 }}
-                                className="p-6 bg-slate-50 dark:bg-[#0A0A0E] border border-blue-200 dark:border-blue-500/30 rounded-2xl shadow-sm dark:shadow-[0_0_30px_rgba(37,99,235,0.1)] relative overflow-hidden"
-                            >
-                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-indigo-500" />
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-5 pl-2">
+                        <motion.div 
+                            initial={{ y: 30, opacity: 0, scale: 0.95 }}
+                            animate={{ y: 0, opacity: 1, scale: 1 }}
+                            className="mt-10 p-8 bg-white/20 dark:bg-white/5 backdrop-blur-[35px] border border-white/40 dark:border-white/10 rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 opacity-50" />
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                                 <div className="flex flex-col w-full overflow-hidden">
                                     <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold mb-1 uppercase tracking-wider">Success</span>
                                     <span className="text-blue-600 dark:text-blue-300 font-mono text-xl truncate selection:bg-blue-200 dark:selection:bg-blue-400/20">
@@ -342,24 +380,27 @@ const ShortenForm = () => {
                                     </span>
                                 </div>
                                 <div className="flex gap-2 full md:w-auto shrink-0 flex-wrap">
-                                    <button
+                                    <motion.button
+                                        whileTap={{ scale: 0.92 }}
                                         onClick={() => setShowQR(!showQR)}
                                         aria-label={t.downloadQRBtn}
                                         className="flex-1 md:flex-none cursor-pointer flex items-center justify-center p-2.5 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-xl transition-all"
                                     >
                                         <QrCode size={20} />
-                                    </button>
-                                    <button
+                                    </motion.button>
+                                    <motion.button
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={() => copyToClipboard()}
                                         className={`flex-1 md:flex-none cursor-pointer flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl transition-all border font-medium ${isCopied
-                                            ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/50 text-emerald-600 dark:text-emerald-400'
+                                            ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/50 text-emerald-600 dark:text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
                                             : 'bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200'
                                             }`}
                                     >
                                         {isCopied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
                                         <span className="hidden sm:inline">{isCopied ? t.copiedBtn : t.copyBtn}</span>
-                                    </button>
-                                    <a
+                                    </motion.button>
+                                    <motion.a
+                                        whileTap={{ scale: 0.92 }}
                                         href={`${window.location.protocol}//${shortUrl}`}
                                         target="_blank"
                                         rel="noreferrer"
@@ -367,14 +408,14 @@ const ShortenForm = () => {
                                         className="flex items-center justify-center p-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]"
                                     >
                                         <ExternalLink size={20} />
-                                    </a>
+                                    </motion.a>
                                 </div>
                             </div>
 
                             {/* QR Code Expansion */}
                             <AnimatePresence>
                                 {showQR && (
-                                    <motion.div 
+                                    <motion.div
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: 'auto', opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
@@ -382,37 +423,38 @@ const ShortenForm = () => {
                                         className="overflow-hidden flex flex-col items-center gap-4"
                                     >
                                         <div className="w-full border-t border-slate-200 dark:border-white/10 mt-5 pt-5 flex flex-col items-center gap-4">
-                                        <div className="p-3 bg-white rounded-xl shadow-sm">
-                                            <QRCodeCanvas
-                                                id="qr-code-canvas-main"
-                                                value={`${window.location.protocol}//${shortUrl}`}
-                                                size={160}
-                                                bgColor={"#ffffff"}
-                                                fgColor={"#0f172a"}
-                                                level={"Q"}
-                                                imageSettings={{
-                                                    src: "/icon.svg",
-                                                    x: undefined,
-                                                    y: undefined,
-                                                    height: 38,
-                                                    width: 38,
-                                                    excavate: true,
-                                                }}
-                                            />
-                                        </div>
-                                        <button 
-                                            onClick={() => downloadCanvasAsPNG("qr-code-canvas-main", "shorty-qr.png")}
-                                            className="flex items-center gap-2 cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                                        >
-                                            <Download size={16} />
-                                            {t.downloadQRBtn}
-                                        </button>
+                                            <div className="p-3 bg-white rounded-xl shadow-sm">
+                                                <QRCodeCanvas
+                                                    id="qr-code-canvas-main"
+                                                    value={`${window.location.protocol}//${shortUrl}`}
+                                                    size={160}
+                                                    bgColor={"#ffffff"}
+                                                    fgColor={"#0f172a"}
+                                                    level={"Q"}
+                                                    imageSettings={{
+                                                        src: "/icon.svg",
+                                                        x: undefined,
+                                                        y: undefined,
+                                                        height: 38,
+                                                        width: 38,
+                                                        excavate: true,
+                                                    }}
+                                                />
+                                            </div>
+                                            <motion.button
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => downloadCanvasAsPNG("qr-code-canvas-main", "shorty-qr.png")}
+                                                className="flex items-center gap-2 cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                                            >
+                                                <Download size={16} />
+                                                {t.downloadQRBtn}
+                                            </motion.button>
                                         </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
-                            </motion.div>
-                        </div>
+                        </motion.div>
+
                     )}
                 </AnimatePresence>
             </motion.div>
@@ -420,37 +462,81 @@ const ShortenForm = () => {
             {/* Локальная История (Recent Links) */}
             <AnimatePresence>
                 {recentLinks.length > 0 && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mt-8 mx-2 sm:mx-6"
+                        className="mt-8 mx-auto w-full"
                     >
-                        <div className="flex items-center justify-between mb-4 px-2">
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                {t.recentLinksTitle}
-                            </h3>
-                            <button 
-                                onClick={() => {
-                                    clearHistory();
-                                    toast.success(t.clearSuccess);
+                        <div className="flex flex-col items-center">
+                            <motion.button
+                                whileTap={{
+                                    scale: 0.95,
+                                    y: 1,
+                                    rotateX: 5,
+                                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
                                 }}
-                                className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-red-500 transition-colors"
+                                whileHover={{
+                                    backgroundColor: "rgba(255, 255, 255, 0.12)",
+                                    borderColor: "rgba(255, 255, 255, 0.4)",
+                                    y: -1
+                                }}
+                                onClick={() => setShowHistory(!showHistory)}
+                                className="flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-[30px] border border-white/20 dark:border-white/10 border-t-white/30 dark:border-t-white/10 text-slate-500 dark:text-slate-300 transition-all text-sm font-semibold shadow-lg overflow-hidden relative group perspective-1000"
                             >
-                                <Trash2 size={14} />
-                                <span className="hidden sm:inline">{t.clearHistoryBtn}</span>
-                            </button>
-                        </div>
-                        
-                        <div className="flex flex-col gap-3">
-                            {recentLinks.map((link, idx) => (
-                                <RecentLinkItem 
-                                    key={link.shortUrl + idx} 
-                                    link={link} 
-                                    idx={idx} 
-                                    t={t} 
-                                    copyToClipboard={copyToClipboard} 
-                                />
-                            ))}
+                                <motion.div
+                                    animate={{ rotate: showHistory ? 180 : 0, scale: showHistory ? 1.1 : 1 }}
+                                    transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                                    className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-500/10 text-slate-500 dark:text-slate-400"
+                                >
+                                    <ArrowRight size={14} className="rotate-90" />
+                                </motion.div>
+                                <span className="relative z-10 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
+                                    {t.recentLinksTitle}
+                                </span>
+
+                                {/* Glass inner glow (hover only) */}
+                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-tr from-white/10 via-transparent to-white/5 transition-opacity duration-500" />
+                            </motion.button>
+
+                            <AnimatePresence>
+                                {showHistory && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                                        animate={{ height: "auto", opacity: 1, marginTop: 24 }}
+                                        exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                                        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                                        className="overflow-hidden w-full px-2 sm:px-6"
+                                    >
+                                        <div className="flex items-center justify-between mb-4 px-2">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400/60">
+                                                {recentLinks.length} Items saved
+                                            </span>
+                                            <motion.button
+                                                whileTap={{ scale: 0.9 }}
+                                                onClick={() => {
+                                                    clearHistory();
+                                                    toast.success(t.clearSuccess);
+                                                }}
+                                                className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-red-500 transition-colors"
+                                            >
+                                                <Trash2 size={14} />
+                                                <span className="hidden sm:inline">{t.clearHistoryBtn}</span>
+                                            </motion.button>
+                                        </div>
+
+                                        <div className="flex flex-col gap-3">
+                                            {recentLinks.map((link, idx) => (
+                                                <RecentLinkItem
+                                                    key={link.shortUrl + idx}
+                                                    link={link}
+                                                    idx={idx}
+                                                    t={t}
+                                                />
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </motion.div>
                 )}

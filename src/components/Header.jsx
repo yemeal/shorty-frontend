@@ -14,25 +14,25 @@ const Header = () => {
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 sm:pt-6">
       <motion.div 
         layout
-        className="flex flex-col mx-auto glass-panel rounded-[2rem] w-[95%] max-w-4xl border-slate-200/20 dark:border-white/10 overflow-hidden"
+        className="flex flex-col mx-auto glass-panel rounded-3xl w-[95%] max-w-4xl border-slate-200/20 dark:border-white/10 overflow-hidden"
       >
         <nav className="flex justify-between items-center h-[75px] sm:h-[90px] px-6 sm:px-8 shrink-0 z-20 bg-transparent">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 sm:gap-4 group cursor-pointer bg-white dark:bg-slate-900 py-1.5 px-4 sm:py-2.5 sm:px-6 rounded-full border border-slate-200 dark:border-white/5 shadow-md hover:shadow-lg transition-all duration-300">
             <div className="relative flex items-center justify-center transition-all duration-500 h-8 w-8 sm:h-9 sm:w-9">
               {/* Outer pulsing glow */}
-              <div className="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-40 dark:opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300" />
+              <div className="absolute inset-0 bg-blue-500/30 rounded-xl blur-lg opacity-40 group-hover:opacity-70 group-hover:scale-125 transition-all duration-500" />
               
-              {/* Inner breathing container identical to the old padding */}
-              <div className="relative bg-blue-600 shadow-inner shadow-white/20 p-1.5 rounded-full z-10 w-full h-full flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-300">
+              {/* Inner container */}
+              <div className="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
                 <img 
                   src="/icon.svg" 
                   alt="Shorty Logo" 
-                  className="w-full h-full object-cover rounded-full group-hover:rotate-[15deg] transition-all duration-300"
+                  className="w-full h-full object-contain rounded-lg transition-all duration-300"
                 />
               </div>
             </div>
-            <span className="font-display font-bold tracking-tight text-slate-800 dark:text-white pr-1 text-base sm:text-lg">
+            <span className="font-display font-extrabold tracking-tight text-slate-900 dark:text-white pr-1 text-base sm:text-xl drop-shadow-sm">
               {t.brand}
             </span>
           </Link>
