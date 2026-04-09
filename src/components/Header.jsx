@@ -101,14 +101,14 @@ const Header = () => {
                     triggerAntigravity();
                     setIsSettingsOpen(false);
                   }}
-                  className="flex items-center gap-3 cursor-pointer bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 hover:-translate-y-1 active:scale-[0.95] border border-red-200 dark:border-red-500/20 p-3 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-red-500/20 group"
+                  className="flex items-center gap-3 cursor-pointer bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 hover:-translate-y-1 active:scale-[0.95] border border-slate-200/50 dark:border-white/5 p-3 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md group"
                 >
-                  <div className="bg-red-100 dark:bg-red-500/20 p-2 rounded-lg group-hover:-translate-y-2 group-hover:rotate-12 transition-all duration-300">
-                    <Rocket size={18} className="text-red-500 dark:text-red-400" />
+                  <div className="bg-slate-100 dark:bg-slate-700/30 p-2 rounded-lg group-hover:scale-110 transition-transform">
+                    <Rocket size={18} className="text-slate-600 dark:text-slate-300" />
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className="text-xs text-red-500/80 dark:text-red-400/80 font-medium font-mono uppercase tracking-widest text-[10px]">Top Secret</span>
-                    <span className="text-sm font-bold text-red-600 dark:text-red-400">{t.easterEgg}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t.secret}</span>
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{t.doNotPress}</span>
                   </div>
                 </button>
 

@@ -71,20 +71,17 @@ const RecentLinkItem = memo(({ link, t, idx }) => {
                     <motion.button
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setShowQR(!showQR)}
-                        className="p-2.5 cursor-pointer bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/10 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors text-slate-600 dark:text-slate-300"
+                        className="cursor-pointer flex items-center justify-center w-10 h-10 bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/10 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors text-slate-600 dark:text-slate-300"
                     >
-                        <QrCode size={16} />
+                        <QrCode size={18} />
                     </motion.button>
                     <motion.button
                         whileTap={{ scale: 0.92 }}
                         onClick={handleCopy}
                         title={t.copyBtn}
-                        className={`p-2 cursor-pointer border rounded-lg transition-all ${isCopied
-                            ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500'
-                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-blue-400 dark:hover:border-blue-500'
-                            }`}
+                        className="cursor-pointer flex items-center justify-center w-10 h-10 bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/10 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors text-slate-600 dark:text-slate-300"
                     >
-                        {isCopied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+                        {isCopied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
                     </motion.button>
                     <motion.a
                         whileTap={{ scale: 0.92 }}
@@ -92,9 +89,9 @@ const RecentLinkItem = memo(({ link, t, idx }) => {
                         target="_blank"
                         rel="noreferrer"
                         title="Open Link"
-                        className="p-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-300"
+                        className="flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]"
                     >
-                        <ExternalLink size={14} />
+                        <ExternalLink size={18} />
                     </motion.a>
                 </div>
             </div>
@@ -388,12 +385,12 @@ const ShortenForm = () => {
                         <motion.div 
                             initial={{ y: 30, opacity: 0, scale: 0.95 }}
                             animate={{ y: 0, opacity: 1, scale: 1 }}
-                            className="mt-4 sm:mt-10 p-4 sm:p-8 bg-white/20 dark:bg-white/5 backdrop-blur-[35px] border border-white/40 dark:border-white/10 rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative overflow-hidden"
+                            className="mt-4 sm:mt-10 p-4 sm:p-8 bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative overflow-hidden"
                         >
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 opacity-50" />
                             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                                 <div className="flex flex-col w-full overflow-hidden">
-                                    <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold mb-1 uppercase tracking-wider">Success</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">{t.success}</span>
                                     <span className="text-blue-600 dark:text-blue-300 font-mono text-xl truncate selection:bg-blue-200 dark:selection:bg-blue-400/20">
                                         {shortUrl}
                                     </span>
@@ -403,20 +400,18 @@ const ShortenForm = () => {
                                         whileTap={{ scale: 0.92 }}
                                         onClick={() => setShowQR(!showQR)}
                                         aria-label={t.downloadQRBtn}
-                                        className="flex-1 md:flex-none cursor-pointer flex items-center justify-center p-2.5 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-xl transition-all"
+                                        className="flex-1 md:flex-none cursor-pointer flex items-center justify-center w-10 h-10 bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/10 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors text-slate-600 dark:text-slate-300"
                                     >
-                                        <QrCode size={20} />
+                                        <QrCode size={18} />
                                     </motion.button>
                                     <motion.button
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => copyToClipboard()}
-                                        className={`flex-1 md:flex-none cursor-pointer flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl transition-all border font-medium ${isCopied
-                                            ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/50 text-emerald-600 dark:text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-                                            : 'bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200'
-                                            }`}
+                                        aria-label={t.copyBtn}
+                                        title={t.copyBtn}
+                                        className="flex-1 md:flex-none cursor-pointer flex items-center justify-center w-10 h-10 bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/10 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors text-slate-600 dark:text-slate-300"
                                     >
                                         {isCopied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
-                                        <span className="hidden sm:inline">{isCopied ? t.copiedBtn : t.copyBtn}</span>
                                     </motion.button>
                                     <motion.a
                                         whileTap={{ scale: 0.92 }}
@@ -424,9 +419,9 @@ const ShortenForm = () => {
                                         target="_blank"
                                         rel="noreferrer"
                                         aria-label="Open short link"
-                                        className="flex items-center justify-center p-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]"
+                                        className="flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]"
                                     >
-                                        <ExternalLink size={20} />
+                                        <ExternalLink size={18} />
                                     </motion.a>
                                 </div>
                             </div>
@@ -524,11 +519,11 @@ const ShortenForm = () => {
                                         animate={{ height: "auto", opacity: 1, marginTop: 16 }}
                                         exit={{ height: 0, opacity: 0, marginTop: 0 }}
                                         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                                        className="overflow-hidden w-full px-1 sm:px-6"
+                                        className="overflow-hidden w-full px-1 sm:px-6 pb-3"
                                     >
                                         <div className="flex items-center justify-between mb-4 px-2">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400/60">
-                                                {recentLinks.length} Items saved
+                                            <span className="text-xs font-medium text-slate-400">
+                                                {t.fiveLastLinks}
                                             </span>
                                             <motion.button
                                                 whileTap={{ scale: 0.9 }}
