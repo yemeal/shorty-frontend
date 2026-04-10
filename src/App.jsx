@@ -8,6 +8,8 @@ import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import BrandLoader from "./components/BrandLoader";
 
 const RequireAuth = ({ children }) => {
   const { isAuthenticated, isBootstrapping } = useAuth();
@@ -15,7 +17,7 @@ const RequireAuth = ({ children }) => {
   if (isBootstrapping) {
     return (
       <div className="min-h-screen flex items-center justify-center text-slate-500 dark:text-slate-300">
-        <span className="glass-panel rounded-2xl px-6 py-3">Loading session...</span>
+        <BrandLoader label="Loading session..." />
       </div>
     );
   }
@@ -72,7 +74,8 @@ const AppContent = () => {
             {/* Legacy fallback for old bookmarks. */}
             <Route path="/profile-placeholder" element={<Navigate to="/placeholder" replace />} />
             <Route path="/placeholder" element={<PlaceholderPage />} />
-            <Route path="*" element={<Navigate to="/placeholder" replace />} />
+            <Route path="/not-found" element={<NotFoundPage />} />
+            <Route path="*" element={<Navigate to="/not-found" replace />} />
           </Routes>
         </Router>
       </div>

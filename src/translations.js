@@ -95,7 +95,16 @@ export const translations = {
     paginationPrev: "Prev",
     paginationNext: "Next",
     paginationPage: "Page",
-    featureUnavailable: "This feature is not available yet"
+    paginationOf: "of",
+    featureUnavailable: "This feature is not available yet",
+    profileDeleteSuccess: "Shorty removed",
+    notFoundTitle: "This shorty was not found...",
+    notFoundHint: "...but life is too short to stress over small stuff. Let's create a new shorty ->",
+    notFoundGoHome: "Back to homepage",
+    logoutConfirmTitle: "Are you sure you want to sign out?",
+    logoutConfirmYes: "Yes",
+    logoutConfirmNo: "No",
+    profileResetFilters: "Reset filters"
   },
   ru: {
     brand: "шорти.рф",
@@ -193,6 +202,15 @@ export const translations = {
     paginationPrev: "Назад",
     paginationNext: "Вперёд",
     paginationPage: "Страница",
-    featureUnavailable: "Данная функция пока недоступна"
+    paginationOf: "из",
+    featureUnavailable: "Данная функция пока недоступна",
+    profileDeleteSuccess: "Шортис удален",
+    notFoundTitle: "Такого шортиса не нашлось...",
+    notFoundHint: "...но жизнь слишком коротка, чтобы расстраиваться по мелочам. Погнали создадим новый шортис ->",
+    notFoundGoHome: "На главную",
+    logoutConfirmTitle: "Вы уверены, что хотите выйти?",
+    logoutConfirmYes: "Да",
+    logoutConfirmNo: "Нет",
+    profileResetFilters: "Сбросить фильтры"
   }
 };
