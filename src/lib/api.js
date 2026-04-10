@@ -12,6 +12,7 @@ const JSON_HEADERS = {
   "Content-Type": "application/json",
 };
 
+// Tries JSON first and falls back to plain text for non-JSON errors.
 async function parseResponseBody(response) {
   const text = await response.text();
   if (!text) return null;
@@ -66,6 +67,7 @@ function toApiError(response, payload) {
 }
 
 export async function apiFetch(path, options = {}) {
+  // `credentials: include` is required for HttpOnly access/refresh cookies.
   const response = await fetch(path, {
     credentials: "include",
     ...options,
@@ -92,6 +94,7 @@ export function apiPostJson(path, body, options = {}) {
 }
 
 export function apiPostForm(path, formData, options = {}) {
+  // Used by OAuth2PasswordRequestForm-compatible endpoints.
   return apiFetch(path, {
     method: "POST",
     body: new URLSearchParams(formData),

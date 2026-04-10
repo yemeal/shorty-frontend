@@ -6,8 +6,8 @@ import { LangProvider } from "./LangContext";
 import { ThemeProvider, useTheme } from "./ThemeContext";
 import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
-import ProfilePage from "./pages/PlaceholderPage";
-import ProfilePlaceholder from "./pages/ProfilePlaceholder";
+import ProfilePage from "./pages/ProfilePage";
+import PlaceholderPage from "./pages/PlaceholderPage";
 
 const RequireAuth = ({ children }) => {
   const { isAuthenticated, isBootstrapping } = useAuth();
@@ -60,6 +60,7 @@ const AppContent = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<AuthPage defaultTab="login" />} />
             <Route path="/register" element={<AuthPage defaultTab="register" />} />
+            {/* Profile is a protected page and requires an active auth session. */}
             <Route
               path="/profile"
               element={
@@ -68,8 +69,9 @@ const AppContent = () => {
                 </RequireAuth>
               }
             />
+            {/* Legacy fallback for old bookmarks. */}
             <Route path="/profile-placeholder" element={<Navigate to="/placeholder" replace />} />
-            <Route path="/placeholder" element={<ProfilePlaceholder />} />
+            <Route path="/placeholder" element={<PlaceholderPage />} />
             <Route path="*" element={<Navigate to="/placeholder" replace />} />
           </Routes>
         </Router>

@@ -39,6 +39,10 @@ export const AuthProvider = ({ children }) => {
     storeUser(nextUser);
   }, []);
 
+  /**
+   * Register creates a backend account and persists the resulting user snapshot
+   * locally until `/me` endpoint becomes the canonical profile source.
+   */
   const register = useCallback(
     async ({ username, email, password, emoji }) => {
       const data = await apiPostJson("/auth/register", {
@@ -64,6 +68,7 @@ export const AuthProvider = ({ children }) => {
         password,
       });
 
+      // Preserve custom emoji when the same user logs in again on this device.
       const previous = readStoredUser();
       const nextUser = {
         ...(data?.user || {}),
@@ -106,6 +111,7 @@ export const AuthProvider = ({ children }) => {
     let isMounted = true;
 
     const bootstrap = async () => {
+      // We only bootstrap refresh when user snapshot exists in local storage.
       const stored = readStoredUser();
       if (!stored) {
         if (isMounted) setIsBootstrapping(false);
@@ -130,6 +136,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (!user) return undefined;
 
+    // Keep cookie-based session alive in the background for active users.
     const id = window.setInterval(() => {
       refreshSession({ clearOnFail: true });
     }, REFRESH_INTERVAL_MS);
