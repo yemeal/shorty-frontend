@@ -19,7 +19,7 @@ const Header = () => {
       <div className="w-[95%] max-w-4xl relative">
         <div className="glass-panel rounded-3xl border-slate-200/20 dark:border-white/10 overflow-hidden relative">
           <nav className="flex justify-between items-center h-[75px] sm:h-[90px] px-6 sm:px-8 relative z-20">
-            <Link to="/" className="flex items-center gap-3 sm:gap-4 group cursor-pointer bg-white dark:bg-slate-900 py-1.5 px-4 sm:py-2.5 sm:px-6 rounded-full border border-slate-200 dark:border-white/5 shadow-md hover:shadow-lg transition-all duration-300">
+            <Link to="/" className="flex items-center gap-3 sm:gap-4 group cursor-pointer bg-white dark:bg-slate-900 py-1.5 px-4 sm:py-2.5 sm:px-6 rounded-3xl border border-slate-200 dark:border-white/5 shadow-md hover:shadow-lg transition-all duration-300">
               <div className="relative flex items-center justify-center transition-all duration-500 h-8 w-8 sm:h-9 sm:w-9">
                 <div className="absolute inset-0 bg-blue-500/30 rounded-xl blur-lg opacity-40 group-hover:opacity-70 group-hover:scale-125 transition-all duration-500" />
                 <div className="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
@@ -44,10 +44,10 @@ const Header = () => {
               {isAuthenticated ? (
                 <Link
                   to="/profile"
-                  className="flex items-center justify-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 border border-slate-200 dark:border-white/5 w-10 h-10 sm:w-11 sm:h-11 rounded-full transition-all shadow-md hover:shadow-lg"
+                  className="flex items-center justify-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 border border-slate-200 dark:border-white/5 w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all shadow-md hover:shadow-lg"
                   aria-label={t.profileTitle}
                 >
-                  <span className="text-xl sm:text-2xl">
+                  <span className="text-2xl sm:text-3xl">
                     {user?.emoji || AUTH_DEFAULT_EMOJI}
                   </span>
                 </Link>

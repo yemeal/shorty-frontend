@@ -30,6 +30,10 @@ body::-webkit-scrollbar {
   display: none;
 }
 
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 html.dark {
   background-color: #070709;
   color: #f1f5f9;
