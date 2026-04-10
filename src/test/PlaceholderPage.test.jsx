@@ -54,7 +54,7 @@ describe("ProfilePage — shorties list", () => {
 
   it("shows pagination badge with correct range", () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
-    expect(screen.getByText(/1–5 \/ 8/)).toBeInTheDocument();
+    expect(screen.getByText(/1-5 (из|of) 8/)).toBeInTheDocument();
   });
 
   it("shows page info in pagination bar", () => {
@@ -68,7 +68,7 @@ describe("ProfilePage — shorties list", () => {
     fireEvent.click(nextBtn);
     const articles = screen.getAllByRole("article");
     expect(articles).toHaveLength(3);
-    expect(screen.getByText(/6–8 \/ 8/)).toBeInTheDocument();
+    expect(screen.getByText(/6-8 (из|of) 8/)).toBeInTheDocument();
   });
 
   it("prev button disabled on page 1", () => {

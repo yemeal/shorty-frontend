@@ -42,7 +42,8 @@ function renderApp(initialRoute) {
                 element={<Navigate to="/placeholder" replace />}
               />
               <Route path="/placeholder" element={<div data-testid="placeholder">Placeholder</div>} />
-              <Route path="*" element={<Navigate to="/placeholder" replace />} />
+              <Route path="/not-found" element={<div data-testid="not-found">Not Found</div>} />
+              <Route path="*" element={<Navigate to="/not-found" replace />} />
             </Routes>
           </MemoryRouter>
         </AuthProvider>
@@ -81,10 +82,10 @@ describe("Routing — redirects", () => {
     });
   });
 
-  it("unknown route redirects to /placeholder", async () => {
+  it("unknown route redirects to /not-found", async () => {
     renderApp("/some-random-path");
     await waitFor(() => {
-      expect(screen.getByTestId("placeholder")).toBeInTheDocument();
+      expect(screen.getByTestId("not-found")).toBeInTheDocument();
     });
   });
 });

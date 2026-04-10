@@ -24,9 +24,10 @@ describe("AuthPage — login tab", () => {
     expect(screen.getByPlaceholderText(/8 char|8 символ/i)).toBeInTheDocument();
   });
 
-  it("does not have username input in login mode", () => {
-    renderWithProviders(<AuthPage defaultTab="login" />, { route: "/login" });
-    expect(screen.queryByPlaceholderText(/your_nickname|tvoy_nik/i)).not.toBeInTheDocument();
+  it("collapses username row in login mode", () => {
+    const { container } = renderWithProviders(<AuthPage defaultTab="login" />, { route: "/login" });
+    const usernameRow = container.querySelector("div.transition-\\[grid-template-rows\\,margin-bottom\\,opacity\\]");
+    expect(usernameRow?.className).toContain("grid-rows-[0fr]");
   });
 
   it("has Sign In / Sign Up tab switcher", () => {
@@ -167,12 +168,13 @@ describe("AuthPage — tab switching", () => {
   });
 
   it("switches from register to login", async () => {
-    renderWithProviders(<AuthPage defaultTab="register" />, { route: "/register" });
+    const { container } = renderWithProviders(<AuthPage defaultTab="register" />, { route: "/register" });
     const signInBtns = screen.getAllByText(/Sign in|Войти/i);
     const tabBtn = signInBtns.find((el) => el.closest("button[type='button']"));
     fireEvent.click(tabBtn);
     await waitFor(() => {
-      expect(screen.queryByPlaceholderText(/your_nickname|tvoy_nik/i)).not.toBeInTheDocument();
+      const usernameRow = container.querySelector("div.transition-\\[grid-template-rows\\,margin-bottom\\,opacity\\]");
+      expect(usernameRow?.className).toContain("grid-rows-[0fr]");
     });
   });
 
@@ -198,6 +200,28 @@ describe("AuthPage — tab switching", () => {
     fireEvent.click(tabBtn);
 
     expect(screen.queryByText(/Pick your emoji|Выбери emoji/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("AuthPage — visual regressions", () => {
+  it("keeps extra bottom padding for light-theme shadow", () => {
+    const { container } = renderWithProviders(<AuthPage defaultTab="login" />, { route: "/login" });
+    const form = container.querySelector("form");
+    expect(form?.className).toContain("pb-3");
+  });
+
+  it("home button has dark shadow in light theme", () => {
+    renderWithProviders(<AuthPage defaultTab="login" />, { route: "/login" });
+    const homeLink = screen.getByRole("link", { name: /Home|Главная/i });
+    expect(homeLink.className).toContain("shadow-[0_10px_24px_rgba(15,23,42,0.2)]");
+  });
+
+  it("keeps droplet transition classes on auth cards", () => {
+    const { container } = renderWithProviders(<AuthPage defaultTab="register" />, { route: "/register" });
+    const wrappers = Array.from(container.querySelectorAll("form > div.grid"));
+    expect(wrappers.length).toBeGreaterThanOrEqual(2);
+    expect(wrappers[0].className).toContain("transition-[grid-template-rows,width]");
+    expect(wrappers[1].className).toContain("transition-[grid-template-rows,width]");
   });
 });
 

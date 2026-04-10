@@ -64,8 +64,8 @@ describe("ShortenForm — submit", () => {
   it("displays generated short URL after success", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
-      json: async () => ({ short_url: "Xz2nAw" }),
-      text: async () => JSON.stringify({ short_url: "Xz2nAw" }),
+      json: async () => ({ slug: "Xz2nAw" }),
+      text: async () => JSON.stringify({ slug: "Xz2nAw" }),
     });
     renderWithRouter(<ShortenForm />);
     fireEvent.change(
@@ -76,6 +76,24 @@ describe("ShortenForm — submit", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Xz2nAw/)).toBeInTheDocument();
+    });
+  });
+
+  it("supports legacy short_url response field", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ short_url: "legacy42" }),
+      text: async () => JSON.stringify({ short_url: "legacy42" }),
+    });
+    renderWithRouter(<ShortenForm />);
+    fireEvent.change(
+      screen.getByPlaceholderText(/Paste your long link|Вставь длинную/i),
+      { target: { value: "https://example.com/legacy" } },
+    );
+    fireEvent.click(screen.getByText(/Shorten|Сократить/i));
+
+    await waitFor(() => {
+      expect(screen.getByText(/legacy42/)).toBeInTheDocument();
     });
   });
 
@@ -240,6 +258,26 @@ describe("ShortenForm — result buttons", () => {
     expect(openLink).toHaveAttribute("href", expect.stringContaining("Xz2nAw"));
     expect(openLink).toHaveAttribute("target", "_blank");
   });
+
+  it("highlights QR button while QR block is open", async () => {
+    await setupWithResult();
+    const qrButton = screen.getByLabelText(/Download QR|Скачать QR/i);
+    fireEvent.click(qrButton);
+    expect(qrButton.className).toContain("border-blue-500");
+    fireEvent.click(qrButton);
+  });
+
+  it("turns copy button green after successful copy", async () => {
+    await setupWithResult();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    const copyButton = screen.getByLabelText(/Copy|Копировать/i);
+    fireEvent.click(copyButton);
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
+    expect(copyButton.className).toContain("border-emerald-500");
+    const successIcon = copyButton.querySelector("svg");
+    expect(successIcon?.className.baseVal || successIcon?.className).toContain("text-emerald");
+  });
 });
 
 describe("ShortenForm — error handling", () => {
@@ -307,5 +345,27 @@ describe("ShortenForm — recent links", () => {
     await waitFor(() => {
       expect(screen.getByText(/Recent Links|Недавние ссылки/i)).toBeInTheDocument();
     });
+  });
+
+  it("keeps only one recent QR open at a time", async () => {
+    localStorage.setItem(
+      "shorty-recent-links",
+      JSON.stringify([
+        { shortUrl: "localhost:5173/first11", original: "https://example.com/1", date: new Date().toISOString() },
+        { shortUrl: "localhost:5173/second22", original: "https://example.com/2", date: new Date().toISOString() },
+      ]),
+    );
+    renderWithRouter(<ShortenForm />);
+    fireEvent.click(screen.getByText(/Recent Links|Недавние ссылки/i));
+    let qrButtons = [];
+    await waitFor(() => {
+      qrButtons = screen.getAllByLabelText(/Download QR|Скачать QR/i).slice(0, 2);
+      expect(qrButtons).toHaveLength(2);
+    });
+    fireEvent.click(qrButtons[0]);
+    await waitFor(() => expect(screen.getAllByTestId("qr-canvas")).toHaveLength(1));
+
+    fireEvent.click(qrButtons[1]);
+    await waitFor(() => expect(screen.getAllByTestId("qr-canvas")).toHaveLength(1));
   });
 });
