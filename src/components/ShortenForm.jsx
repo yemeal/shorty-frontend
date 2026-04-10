@@ -5,8 +5,19 @@ import { useRecentLinks } from '../hooks/useRecentLinks';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { QRCodeCanvas } from 'qrcode.react';
+import { ApiError, apiPostJson } from '../lib/api';
 
-const reservedWords = ['docs', 'redoc', 'openapi.json', 'short_url', 'api', 'admin', 'апи', 'админ'];
+const reservedWords = [
+    'docs', 'redoc', 'openapi.json', 'short_url', 'auth', 'me', 'api', 'admin',
+    'health', 'metrics', 'graphql', 'ws',
+    'login', 'register', 'profile', 'placeholder', 'profile-placeholder',
+    'favicon.ico', 'favicon', 'robots.txt', 'robots', 'sitemap.xml', 'sitemap',
+    'manifest.webmanifest', 'manifest', 'assets', 'static', 'public',
+    'img', 'images', 'fonts', 'css', 'js', 'uploads', 'media',
+    'about', 'contact', 'privacy', 'terms', 'support', 'help', 'status',
+    'dashboard', 'settings', 'shorty',
+    'апи', 'админ', 'доки', 'вход', 'регистрация', 'профиль', 'настройки',
+];
 
 const validateSlug = (slugText) => {
     if (!slugText) return 'slugErrorLength';
@@ -186,41 +197,7 @@ const ShortenForm = () => {
         setShowQR(false);
 
         try {
-            const response = await fetch('/short_url/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                if (response.status === 409) {
-                    setErrorField('slug');
-                    throw new Error(t.slugErrorTaken);
-                }
-
-                const errData = await response.json();
-                let errorMessage = t.errorGeneric;
-
-                if (errData.detail) {
-                    if (Array.isArray(errData.detail)) {
-                        errorMessage = errData.detail[0].msg;
-                        if (errorMessage.includes("URL") || errorMessage.includes("url")) {
-                            errorMessage = t.errorEmpty;
-                            setErrorField('long_url');
-                        }
-                    } else if (typeof errData.detail === 'object' && errData.detail !== null) {
-                        errorMessage = errData.detail.message || t.errorGeneric;
-                    } else {
-                        errorMessage = errData.detail;
-                    }
-                }
-                throw new Error(errorMessage);
-            }
-
-            const data = await response.json();
+            const data = await apiPostJson('/short_url/', payload);
             let originHost = window.location.host;
             originHost = originHost.replace('xn--h1algi1a.xn--p1ai', 'шорти.рф');
             const generatedUrl = `${originHost}/${data.short_url}`;
@@ -235,7 +212,19 @@ const ShortenForm = () => {
             });
 
         } catch (err) {
-            toast.error(err.message);
+            if (err instanceof ApiError) {
+                if (err.status === 409) {
+                    setErrorField('slug');
+                    toast.error(t.slugErrorTaken);
+                    return;
+                }
+                if (err.status === 422) {
+                    setErrorField('long_url');
+                }
+                toast.error(err.message || t.errorGeneric);
+                return;
+            }
+            toast.error(err?.message || t.errorGeneric);
         } finally {
             setIsLoading(false);
         }
