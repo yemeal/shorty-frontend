@@ -1,12 +1,14 @@
-import React, { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { QRCodeCanvas } from "qrcode.react";
-import { ArrowUpDown, CheckCircle2, Copy, Download, ExternalLink, PencilLine, QrCode, Trash2, UserCircle2 } from "lucide-react";
+import { ArrowUpDown, CheckCircle2, Copy, Download, ExternalLink, LogOut, PencilLine, QrCode, Trash2, UserCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import Header from "../components/Header";
 import { AUTH_DEFAULT_EMOJI, useAuth } from "../AuthContext";
 import { useLang } from "../LangContext";
+import { downloadCanvasAsJpg } from "../lib/downloadImage";
+import ActionIconButton from "../components/ActionIconButton";
 
 // Temporary local mock list. The UI state/logic is API-ready and can be
 // switched to backend data once profile shorties endpoint is available.
@@ -23,18 +25,6 @@ const MOCK_SHORTIES = [
 
 const PAGE_SIZE = 5;
 
-const downloadCanvasAsPNG = (canvasId, defaultFileName) => {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const pngUrl = canvas.toDataURL("image/png");
-  const a = document.createElement("a");
-  a.download = defaultFileName;
-  a.href = pngUrl;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-};
-
 const BTN_GLASS =
   "cursor-pointer flex items-center justify-center w-10 h-10 bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/10 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors text-slate-600 dark:text-slate-300";
 const BTN_GO =
@@ -44,21 +34,57 @@ const BTN_DANGER =
 
 const MotionDiv = motion.div;
 const MotionButton = motion.button;
+const IS_TEST_ENV = import.meta.env.MODE === "test";
 
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { t } = useLang();
-  const [query, setQuery] = useState("");
-  const [sort, setSort] = useState("newest");
-  const [page, setPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get("q") || "");
+  const [sort, setSort] = useState(() => searchParams.get("sort") || "newest");
+  const [page, setPage] = useState(() => Number(searchParams.get("page") || 1));
+  const [shorties, setShorties] = useState(MOCK_SHORTIES);
   const [qrExpandedId, setQrExpandedId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [isLoadingShorties, setIsLoadingShorties] = useState(!IS_TEST_ENV);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const [isMutatingId, setIsMutatingId] = useState(null);
 
   const profileEmoji = user?.emoji || AUTH_DEFAULT_EMOJI;
+  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (query.trim()) next.set("q", query.trim());
+    if (sort !== "newest") next.set("sort", sort);
+    if (safePage > 1) next.set("page", String(safePage));
+    setSearchParams(next, { replace: true });
+  }, [query, safePage, setSearchParams, sort]);
+
+  useEffect(() => {
+    if (IS_TEST_ENV) return undefined;
+    setIsLoadingShorties(true);
+    const timeoutId = window.setTimeout(() => setIsLoadingShorties(false), 550);
+    return () => window.clearTimeout(timeoutId);
+  }, [query, sort, safePage]);
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setQrExpandedId(null);
+        setIsLogoutConfirmOpen(false);
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   // Centralized derived list for search + sorting.
   const filtered = useMemo(() => {
-    let items = [...MOCK_SHORTIES];
+    let items = [...shorties];
 
     if (query.trim()) {
       const search = query.toLowerCase().trim();
@@ -73,23 +99,41 @@ const ProfilePage = () => {
     if (sort === "clicks_asc") items.sort((a, b) => a.clicks - b.clicks);
 
     return items;
-  }, [query, sort]);
+  }, [query, shorties, sort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
+  const currentPage = Math.min(safePage, totalPages);
   const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   const shownFrom = filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const shownTo = (currentPage - 1) * PAGE_SIZE + paged.length;
 
   const copy = async (value, itemId) => {
     try {
-      await navigator.clipboard.writeText(value);
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const el = document.createElement("textarea");
+        el.value = value;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+      }
       toast.success(t.copySuccess);
       setCopiedId(itemId);
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
       toast.error(t.errorGeneric);
     }
+  };
+
+  const removeShorty = async (itemId) => {
+    setIsMutatingId(itemId);
+    setTimeout(() => {
+      setShorties((prev) => prev.filter((item) => item.id !== itemId));
+      setIsMutatingId(null);
+      toast.success(t.profileDeleteSuccess);
+    }, 380);
   };
 
   return (
@@ -179,15 +223,38 @@ const ProfilePage = () => {
             <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-6 relative overflow-hidden transition-shadow duration-300">
               <div className="mb-3">
                 <span className="inline-flex items-center rounded-xl border border-white/55 dark:border-white/10 bg-white/35 dark:bg-black/20 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  {shownFrom}–{shownTo} / {filtered.length}
+                  {shownFrom}-{shownTo} {t.paginationOf} {filtered.length}
                 </span>
               </div>
 
               <div className="space-y-3 relative z-10">
-                {paged.length === 0 ? (
+                {isLoadingShorties ? (
+                  Array.from({ length: 3 }).map((_, idx) => (
+                    <div
+                      key={`skeleton-${idx}`}
+                      className="rounded-2xl p-3 sm:p-4 bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 animate-pulse"
+                    >
+                      <div className="h-4 w-40 bg-white/40 dark:bg-white/10 rounded mb-2" />
+                      <div className="h-3 w-full bg-white/35 dark:bg-white/10 rounded mb-2" />
+                      <div className="h-3 w-28 bg-white/30 dark:bg-white/10 rounded" />
+                    </div>
+                  ))
+                ) : paged.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-white/20 dark:border-white/10 bg-white/10 dark:bg-white/5 py-10 text-center">
                     <UserCircle2 size={24} className="mx-auto text-slate-400 mb-2" />
                     <p className="text-slate-500 dark:text-slate-400">{t.shortiesEmpty}</p>
+                    <div className="mt-4 flex justify-center gap-2">
+                      <button
+                        onClick={() => {
+                          setQuery("");
+                          setSort("newest");
+                          setPage(1);
+                        }}
+                        className="cursor-pointer rounded-xl px-3 py-2 text-sm font-medium border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20"
+                      >
+                        {t.profileResetFilters}
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   paged.map((item) => {
@@ -206,22 +273,26 @@ const ProfilePage = () => {
                             </span>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <MotionButton
+                            <ActionIconButton
                               whileTap={{ scale: 0.9 }}
                               onClick={() => setQrExpandedId((prev) => (prev === item.id ? null : item.id))}
-                              className={BTN_GLASS}
+                              variant={qrExpandedId === item.id ? "active" : "default"}
                               aria-label={t.downloadQRBtn}
                             >
                               <QrCode size={18} />
-                            </MotionButton>
-                            <MotionButton
+                            </ActionIconButton>
+                            <ActionIconButton
                               whileTap={{ scale: 0.92 }}
                               onClick={() => copy(item.short, item.id)}
-                              className={BTN_GLASS}
+                              variant={copiedId === item.id ? "success" : "default"}
                               aria-label={t.copyBtn}
                             >
-                              {copiedId === item.id ? <CheckCircle2 size={18} /> : <Copy size={18} />}
-                            </MotionButton>
+                              {copiedId === item.id ? (
+                                <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />
+                              ) : (
+                                <Copy size={18} />
+                              )}
+                            </ActionIconButton>
                             <motion.a
                               whileTap={{ scale: 0.92 }}
                               href={`${window.location.protocol}//${item.short}`}
@@ -242,9 +313,10 @@ const ProfilePage = () => {
                             </MotionButton>
                             <MotionButton
                               whileTap={{ scale: 0.9 }}
-                              onClick={() => toast(t.featureUnavailable)}
+                              onClick={() => removeShorty(item.id)}
                               className={BTN_DANGER}
                               aria-label="Delete shorty"
+                              disabled={isMutatingId === item.id}
                             >
                               <Trash2 size={16} />
                             </MotionButton>
@@ -274,7 +346,7 @@ const ProfilePage = () => {
                                 </div>
                                 <MotionButton
                                   whileTap={{ scale: 0.95 }}
-                                  onClick={() => downloadCanvasAsPNG(qrId, `shorty-qr-${item.id}.png`)}
+                                  onClick={() => downloadCanvasAsJpg(qrId, `shorty-qr-${item.id}.jpg`, { quality: 0.96, scale: 4 })}
                                   className="flex items-center gap-2 cursor-pointer text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                                 >
                                   <Download size={14} />
@@ -313,8 +385,58 @@ const ProfilePage = () => {
               </button>
             </div>
           </div>
+
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={() => setIsLogoutConfirmOpen(true)}
+              className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-base font-display font-bold border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/35 transition text-red-500"
+            >
+              <LogOut size={16} />
+              {t.signOut}
+            </button>
+          </div>
         </div>
       </main>
+
+      <AnimatePresence>
+        {isLogoutConfirmOpen && (
+          <MotionDiv
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-sm flex items-center justify-center px-4"
+          >
+            <MotionDiv
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              className="w-full max-w-md rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-[30px] border border-white/50 dark:border-white/10 shadow-2xl p-6 text-center"
+            >
+              <p className="font-display text-xl font-black text-slate-900 dark:text-white">
+                {t.logoutConfirmTitle}
+              </p>
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <button
+                  onClick={() => setIsLogoutConfirmOpen(false)}
+                  className="cursor-pointer rounded-2xl px-4 py-2.5 text-sm font-semibold border border-white/50 dark:border-white/10 bg-white/40 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/35 transition"
+                >
+                  {t.logoutConfirmNo}
+                </button>
+                <button
+                  onClick={async () => {
+                    await logout();
+                    setIsLogoutConfirmOpen(false);
+                  }}
+                  className="cursor-pointer rounded-2xl px-4 py-2.5 text-sm font-semibold bg-red-500/90 hover:bg-red-500 text-white transition"
+                >
+                  {t.logoutConfirmYes}
+                </button>
+              </div>
+            </MotionDiv>
+          </MotionDiv>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
