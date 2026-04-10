@@ -1,10 +1,31 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import ProfilePlaceholder from './pages/ProfilePlaceholder';
-import { LangProvider } from './LangContext';
-import { ThemeProvider, useTheme } from './ThemeContext';
-import { Toaster } from 'sonner';
+import React from "react";
+import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
+import { AuthProvider, useAuth } from "./AuthContext";
+import { LangProvider } from "./LangContext";
+import { ThemeProvider, useTheme } from "./ThemeContext";
+import HomePage from "./pages/HomePage";
+import AuthPage from "./pages/AuthPage";
+import ProfilePage from "./pages/PlaceholderPage";
+import ProfilePlaceholder from "./pages/ProfilePlaceholder";
+
+const RequireAuth = ({ children }) => {
+  const { isAuthenticated, isBootstrapping } = useAuth();
+
+  if (isBootstrapping) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-slate-500 dark:text-slate-300">
+        <span className="glass-panel rounded-2xl px-6 py-3">Loading session...</span>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
 
 const AppContent = () => {
   const { theme } = useTheme();
@@ -18,6 +39,7 @@ const AppContent = () => {
   
   return (
     <LangProvider>
+      <AuthProvider>
       <Toaster 
         theme={theme} 
         position={isMobile ? "top-center" : "bottom-right"} 
@@ -36,20 +58,25 @@ const AppContent = () => {
         <Router>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/profile-placeholder" element={<ProfilePlaceholder />} />
-            <Route path="*" element={<ForceServerRedirect />} />
+            <Route path="/login" element={<AuthPage defaultTab="login" />} />
+            <Route path="/register" element={<AuthPage defaultTab="register" />} />
+            <Route
+              path="/profile"
+              element={
+                <RequireAuth>
+                  <ProfilePage />
+                </RequireAuth>
+              }
+            />
+            <Route path="/profile-placeholder" element={<Navigate to="/placeholder" replace />} />
+            <Route path="/placeholder" element={<ProfilePlaceholder />} />
+            <Route path="*" element={<Navigate to="/placeholder" replace />} />
           </Routes>
         </Router>
       </div>
+      </AuthProvider>
     </LangProvider>
   );
-};
-
-const ForceServerRedirect = () => {
-  React.useEffect(() => {
-    window.location.reload();
-  }, []);
-  return null;
 };
 
 const App = () => {
