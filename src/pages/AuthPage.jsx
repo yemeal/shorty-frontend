@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import Header from "../components/Header";
 import { useLang } from "../LangContext";
@@ -13,6 +13,7 @@ const EMOJI_PRESET = [
 ];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const IS_TEST_ENV = import.meta.env.MODE === "test";
 
 function messageForError(error, t) {
   if (!error?.code) return error?.message || t.errorGeneric;
@@ -33,7 +34,7 @@ function messageForError(error, t) {
 }
 
 const fieldClass = (isError) =>
-  `mt-2 w-full rounded-2xl border px-4 py-3 outline-none transition font-mono text-base placeholder:font-mono ${
+  `mt-2 w-full rounded-2xl border px-4 py-3 outline-none transition font-mono text-base tracking-[0.01em] placeholder:font-mono placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-white ${
     isError
       ? "border-red-500/70 focus:border-red-500 focus:ring-2 focus:ring-red-500/30 bg-red-500/5 shadow-[inset_0_2px_12px_rgba(239,68,68,0.15)]"
       : "border-white/50 dark:border-white/10 bg-white/25 dark:bg-black/30 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 shadow-[inset_0_2px_12px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_10px_0_rgba(255,255,255,0.05)]"
@@ -91,6 +92,10 @@ const AuthPage = ({ defaultTab = "login" }) => {
   const [step, setStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [errorField, setErrorField] = useState(null);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [step0Expanded, setStep0Expanded] = useState(IS_TEST_ENV && (defaultTab === "login" || defaultTab === "register"));
+  const [step1Expanded, setStep1Expanded] = useState(IS_TEST_ENV ? defaultTab === "register" && step === 1 : false);
+  const didInitialDropletRef = useRef(IS_TEST_ENV);
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -107,6 +112,42 @@ const AuthPage = ({ defaultTab = "login" }) => {
   useEffect(() => {
     if (isAuthenticated) navigate("/", { replace: true });
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    const shouldShowStep0 = tab === "login" || step === 0;
+    const shouldShowStep1 = tab === "register" && step === 1;
+
+    if (IS_TEST_ENV) {
+      setStep0Expanded(shouldShowStep0);
+      setStep1Expanded(shouldShowStep1);
+      return undefined;
+    }
+
+    if (!didInitialDropletRef.current) {
+      setStep0Expanded(false);
+      setStep1Expanded(false);
+      const id = window.setTimeout(() => {
+        setStep0Expanded(shouldShowStep0);
+        setStep1Expanded(shouldShowStep1);
+        didInitialDropletRef.current = true;
+      }, 24);
+      return () => window.clearTimeout(id);
+    }
+
+    setStep0Expanded(shouldShowStep0);
+    setStep1Expanded(shouldShowStep1);
+    return undefined;
+  }, [step, tab]);
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key === "Escape" && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const title = useMemo(() => {
     if (tab === "register" && step === 1) return t.registerContinueTitle;
@@ -205,119 +246,139 @@ const AuthPage = ({ defaultTab = "login" }) => {
 
         <AuthTabSwitch tab={tab} onSwitch={switchTab} t={t} />
 
-        <form onSubmit={onSubmit} noValidate className="w-full max-w-xl space-y-4">
-          <AnimatePresence mode="wait">
-            {(tab === "login" || step === 0) && (
-              <MotionDiv
-                key={`${tab}-step0`}
-                layout
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
-                className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-6 relative overflow-hidden transition-shadow duration-300"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent dark:from-white/5 pointer-events-none" />
-                <div className="relative z-10 space-y-4">
-                  {tab === "register" && (
-                    <label className="block">
-                      <span className="text-sm sm:text-base font-display font-semibold text-slate-600 dark:text-slate-300">{t.usernameLabel}</span>
-                      <input
-                        type="text"
-                        value={form.username}
-                        onChange={(e) => {
-                          setForm((prev) => ({ ...prev, username: e.target.value }));
-                          if (errorField === "username") setErrorField(null);
-                        }}
-                        className={fieldClass(errorField === "username")}
-                        placeholder={t.usernamePlaceholder}
-                        maxLength={20}
-                        aria-invalid={errorField === "username"}
-                      />
-                    </label>
-                  )}
-
-                  <label className="block">
-                    <span className="text-sm sm:text-base font-display font-semibold text-slate-600 dark:text-slate-300">Email</span>
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => {
-                        setForm((prev) => ({ ...prev, email: e.target.value }));
-                        if (errorField === "email") setErrorField(null);
-                      }}
-                      className={fieldClass(errorField === "email")}
-                      placeholder="you@example.com"
-                      aria-invalid={errorField === "email"}
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="text-sm sm:text-base font-display font-semibold text-slate-600 dark:text-slate-300">Password</span>
-                    <input
-                      type="password"
-                      value={form.password}
-                      onChange={(e) => {
-                        setForm((prev) => ({ ...prev, password: e.target.value }));
-                        if (errorField === "password") setErrorField(null);
-                      }}
-                      className={fieldClass(errorField === "password")}
-                      placeholder={t.passwordPlaceholder}
-                      aria-invalid={errorField === "password"}
-                    />
-                  </label>
-                </div>
-              </MotionDiv>
-            )}
-
-            {tab === "register" && step === 1 && (
-              <MotionDiv
-                key="register-step1"
-                layout
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
-                className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-6 relative overflow-hidden transition-shadow duration-300"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent dark:from-white/5 pointer-events-none" />
-                <div className="relative z-10 space-y-4">
-                  <div className="rounded-3xl border border-white/40 dark:border-white/10 bg-white/30 dark:bg-black/20 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{t.selectedEmoji}</p>
-                        <p className="font-semibold text-slate-700 dark:text-slate-200">{t.avatarPreview}</p>
-                      </div>
-                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/60 dark:bg-slate-900/60 text-3xl border border-white/40 dark:border-white/10">
-                        {form.emoji || AUTH_DEFAULT_EMOJI}
+        <form onSubmit={onSubmit} noValidate className="w-full max-w-xl space-y-4 pb-3 dark:pb-0">
+            <div
+              className={`grid origin-center mx-auto transition-[grid-template-rows,width] duration-[400ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                step0Expanded ? "grid-rows-[1fr] w-full" : "grid-rows-[0fr] w-36 sm:w-40"
+              }`}
+            >
+              <div className="overflow-hidden min-h-0 px-1 pb-3">
+                <MotionDiv
+                  initial={false}
+                  animate={{ opacity: step0Expanded ? 1 : 0 }}
+                  transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+                  className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-6 pb-7 sm:pb-9 dark:pb-6 relative overflow-hidden transition-shadow duration-300"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent dark:from-white/5 pointer-events-none" />
+                  <div className="relative z-10 space-y-4">
+                    <div
+                      className={`grid transition-[grid-template-rows,margin-bottom,opacity] duration-[320ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                        tab === "register" ? "grid-rows-[1fr] opacity-100 mb-0" : "grid-rows-[0fr] opacity-0 mb-[-0.5rem]"
+                      }`}
+                    >
+                      <div className="overflow-hidden min-h-0">
+                        <label className="block">
+                          <span className="text-sm sm:text-base font-display font-semibold text-slate-600 dark:text-slate-300">{t.usernameLabel}</span>
+                          <input
+                            type="text"
+                            value={form.username}
+                            onChange={(e) => {
+                              setForm((prev) => ({ ...prev, username: e.target.value }));
+                              if (errorField === "username") setErrorField(null);
+                            }}
+                            className={fieldClass(errorField === "username")}
+                            placeholder={t.usernamePlaceholder}
+                            maxLength={20}
+                            aria-invalid={errorField === "username"}
+                          />
+                        </label>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-5 gap-2">
-                    {EMOJI_PRESET.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => {
-                          setForm((prev) => ({ ...prev, emoji }));
-                          toast.success(`${t.selectedEmoji}: ${emoji}`);
+                    <label className="block">
+                      <span className="text-sm sm:text-base font-display font-semibold text-slate-600 dark:text-slate-300">Email</span>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => {
+                          setForm((prev) => ({ ...prev, email: e.target.value }));
+                          if (errorField === "email") setErrorField(null);
                         }}
-                        className={`cursor-pointer h-12 rounded-2xl border transition-all flex items-center justify-center text-2xl ${
-                          form.emoji === emoji
-                            ? "bg-blue-500/15 border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.2)]"
-                            : "bg-white/35 dark:bg-black/20 border-white/50 dark:border-white/10 hover:border-blue-300"
-                        }`}
-                        aria-label={`emoji ${emoji}`}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
+                        className={fieldClass(errorField === "email")}
+                        placeholder="you@example.com"
+                        aria-invalid={errorField === "email"}
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="text-sm sm:text-base font-display font-semibold text-slate-600 dark:text-slate-300">Password</span>
+                      <div className="relative">
+                        <input
+                          type={isPasswordVisible ? "text" : "password"}
+                          value={form.password}
+                          onChange={(e) => {
+                            setForm((prev) => ({ ...prev, password: e.target.value }));
+                            if (errorField === "password") setErrorField(null);
+                          }}
+                          className={`${fieldClass(errorField === "password")} pr-12`}
+                          placeholder={t.passwordPlaceholder}
+                          aria-invalid={errorField === "password"}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setIsPasswordVisible((prev) => !prev)}
+                          className="cursor-pointer absolute right-3 top-[calc(50%+0.25rem)] -translate-y-1/2 h-8 w-8 rounded-xl border border-white/50 dark:border-white/10 bg-white/45 dark:bg-slate-900/40 text-slate-500 hover:text-blue-500 hover:border-blue-400 transition-colors flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/35"
+                          aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                        >
+                          {isPasswordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                    </label>
                   </div>
-                </div>
-              </MotionDiv>
-            )}
-          </AnimatePresence>
+                </MotionDiv>
+              </div>
+            </div>
+
+            <div
+              className={`grid origin-center mx-auto transition-[grid-template-rows,width] duration-[400ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                step1Expanded ? "grid-rows-[1fr] w-full mt-3" : "grid-rows-[0fr] w-40 sm:w-44"
+              }`}
+            >
+              <div className="overflow-hidden min-h-0 px-1 pb-3">
+                <MotionDiv
+                  initial={false}
+                  animate={{ opacity: step1Expanded ? 1 : 0 }}
+                  transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+                  className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-6 pb-5 sm:pb-7 dark:pb-6 relative overflow-hidden transition-shadow duration-300"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent dark:from-white/5 pointer-events-none" />
+                  <div className="relative z-10 space-y-4">
+                    <div className="rounded-3xl border border-white/40 dark:border-white/10 bg-white/30 dark:bg-black/20 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{t.selectedEmoji}</p>
+                          <p className="font-semibold text-slate-700 dark:text-slate-200">{t.avatarPreview}</p>
+                        </div>
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/60 dark:bg-slate-900/60 text-3xl border border-white/40 dark:border-white/10">
+                          {form.emoji || AUTH_DEFAULT_EMOJI}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-2">
+                      {EMOJI_PRESET.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => {
+                            setForm((prev) => ({ ...prev, emoji }));
+                            toast.success(`${t.selectedEmoji}: ${emoji}`);
+                          }}
+                          className={`cursor-pointer h-12 rounded-2xl border transition-all flex items-center justify-center text-2xl ${
+                            form.emoji === emoji
+                              ? "bg-blue-500/15 border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.2)]"
+                              : "bg-white/35 dark:bg-black/20 border-white/50 dark:border-white/10 hover:border-blue-300"
+                          }`}
+                          aria-label={`emoji ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </MotionDiv>
+              </div>
+            </div>
 
           <div className="bg-white/50 dark:bg-slate-900/35 backdrop-blur-[30px] border border-white/50 dark:border-white/10 rounded-3xl shadow-lg dark:shadow-2xl p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -333,7 +394,7 @@ const AuthPage = ({ defaultTab = "login" }) => {
               ) : (
                 <Link
                   to="/"
-                  className="order-2 sm:order-1 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-base font-display font-bold border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/35 transition"
+                  className="order-2 sm:order-1 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-base font-display font-bold border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/35 shadow-[0_10px_24px_rgba(15,23,42,0.2)] dark:shadow-none transition"
                 >
                   <ArrowLeft size={16} />
                   {t.goHome}
