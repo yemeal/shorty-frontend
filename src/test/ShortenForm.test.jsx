@@ -124,7 +124,7 @@ describe("ShortenForm — submit", () => {
 describe("ShortenForm — custom slug", () => {
   it("custom slug input hidden by default", () => {
     renderWithRouter(<ShortenForm />);
-    expect(screen.queryByPlaceholderText(/my-cool-link|moi-slug/i)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/my-cool-link|moi-slug/i)).not.toBeVisible();
   });
 
   it("shows custom slug input when toggle enabled", async () => {
@@ -142,6 +142,9 @@ describe("ShortenForm — custom slug", () => {
       expect(screen.getByPlaceholderText(/my-cool-link|moi-slug/i)).toBeInTheDocument();
     });
     fireEvent.click(screen.getByText(/Custom link|Своя ссылка/i));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/my-cool-link|moi-slug/i)).not.toBeVisible();
+    });
   });
 
   it("sends slug in payload when custom slug is set", async () => {
@@ -250,6 +253,13 @@ describe("ShortenForm — result buttons", () => {
     const btns = screen.getAllByRole("button");
     expect(btns.length).toBeGreaterThanOrEqual(2);
     expect(screen.getByLabelText(/Open short link/i)).toBeInTheDocument();
+  });
+
+  it("uses two-row mobile-ready layout in result card", async () => {
+    await setupWithResult();
+    const successTitle = screen.getByText(/Success|Успех/i);
+    const wrapper = successTitle.closest("div.flex.flex-col.sm\\:flex-row");
+    expect(wrapper).toBeInTheDocument();
   });
 
   it("open link has correct href", async () => {

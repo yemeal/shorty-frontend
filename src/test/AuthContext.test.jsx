@@ -199,7 +199,11 @@ describe("useAuth — logout", () => {
     await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
 
     await act(async () => {
-      try { await result.current.logout(); } catch {}
+      try {
+        await result.current.logout();
+      } catch {
+        // logout failure is expected in this test case
+      }
     });
 
     expect(result.current.user).toBeNull();

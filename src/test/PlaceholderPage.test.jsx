@@ -183,6 +183,13 @@ describe("ProfilePage — card buttons", () => {
     expect(delBtns.length).toBeGreaterThanOrEqual(5);
   });
 
+  it("delete button is neutral until hover state", () => {
+    renderWithProviders(<ProfilePage />, { route: "/profile" });
+    const deleteButton = screen.getAllByLabelText(/Delete shorty/i)[0];
+    expect(deleteButton.className).toContain("text-slate-500");
+    expect(deleteButton.className).toContain("hover:text-red-500");
+  });
+
   it("QR button toggles QR code display", () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     const qrBtns = screen.getAllByLabelText(/QR/i);
@@ -204,5 +211,27 @@ describe("ProfilePage — card buttons", () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     fireEvent.click(screen.getAllByLabelText(/QR/i)[0]);
     expect(screen.getByText(/Download QR|Скачать QR/i)).toBeInTheDocument();
+  });
+
+  it("uses two-row mobile-ready card layout", () => {
+    renderWithProviders(<ProfilePage />, { route: "/profile" });
+    const firstArticle = screen.getAllByRole("article")[0];
+    const row = firstArticle.querySelector("div.flex.flex-col.sm\\:flex-row");
+    expect(row).toBeInTheDocument();
+  });
+
+  it("centers card actions row", () => {
+    renderWithProviders(<ProfilePage />, { route: "/profile" });
+    const firstArticle = screen.getAllByRole("article")[0];
+    const actionsRow = firstArticle.querySelector("div.justify-center");
+    expect(actionsRow).toBeInTheDocument();
+  });
+
+  it("animates card collapse before deletion", () => {
+    const { container } = renderWithProviders(<ProfilePage />, { route: "/profile" });
+    const deleteButton = screen.getAllByLabelText(/Delete shorty/i)[0];
+    fireEvent.click(deleteButton);
+    const collapsingWrapper = container.querySelector("div.grid.grid-rows-\\[0fr\\]");
+    expect(collapsingWrapper).toBeInTheDocument();
   });
 });

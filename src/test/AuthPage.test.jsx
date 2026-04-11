@@ -26,7 +26,7 @@ describe("AuthPage — login tab", () => {
 
   it("collapses username row in login mode", () => {
     const { container } = renderWithProviders(<AuthPage defaultTab="login" />, { route: "/login" });
-    const usernameRow = container.querySelector("div.transition-\\[grid-template-rows\\,margin-bottom\\,opacity\\]");
+    const usernameRow = container.querySelector("div.transition-\\[grid-template-rows\\,opacity\\]");
     expect(usernameRow?.className).toContain("grid-rows-[0fr]");
   });
 
@@ -173,7 +173,7 @@ describe("AuthPage — tab switching", () => {
     const tabBtn = signInBtns.find((el) => el.closest("button[type='button']"));
     fireEvent.click(tabBtn);
     await waitFor(() => {
-      const usernameRow = container.querySelector("div.transition-\\[grid-template-rows\\,margin-bottom\\,opacity\\]");
+      const usernameRow = container.querySelector("div.transition-\\[grid-template-rows\\,opacity\\]");
       expect(usernameRow?.className).toContain("grid-rows-[0fr]");
     });
   });
@@ -222,6 +222,18 @@ describe("AuthPage — visual regressions", () => {
     expect(wrappers.length).toBeGreaterThanOrEqual(2);
     expect(wrappers[0].className).toContain("transition-[grid-template-rows,width]");
     expect(wrappers[1].className).toContain("transition-[grid-template-rows,width]");
+  });
+
+  it("eye button toggles password without changing input focus", () => {
+    renderWithProviders(<AuthPage defaultTab="login" />, { route: "/login" });
+    const passwordInput = screen.getByPlaceholderText(/8 char|8 символ/i);
+    const eyeButton = screen.getByRole("button", { name: /Show password|Hide password/i });
+
+    passwordInput.focus();
+    expect(document.activeElement).toBe(passwordInput);
+    fireEvent.mouseDown(eyeButton);
+    fireEvent.click(eyeButton);
+    expect(document.activeElement).toBe(passwordInput);
   });
 });
 
