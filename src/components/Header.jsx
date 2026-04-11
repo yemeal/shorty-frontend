@@ -4,9 +4,10 @@ import { Globe, LogIn, Settings, Sun, Moon, Rocket } from "lucide-react";
 import { useLang } from "../LangContext";
 import { useTheme } from "../ThemeContext";
 import { useAuth, AUTH_DEFAULT_EMOJI } from "../AuthContext";
+import { GLASS_HOVER_INTERACTIVE_CLASS, MOTION_EASE_SMOOTH } from "../lib/motionTokens";
 
 const BUTTON_CLASS =
-  "flex items-center gap-3 cursor-pointer bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 p-3 rounded-xl hover:-translate-y-1 active:scale-[0.97] transition-all duration-500 shadow-[0_10px_25px_-10px_rgba(0,0,0,0.05)] dark:shadow-none hover:shadow-[0_15px_35px_-8px_rgba(0,0,0,0.1)] group";
+  `flex items-center gap-3 cursor-pointer bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 p-3 rounded-xl active:scale-[0.97] shadow-[0_10px_25px_-10px_rgba(0,0,0,0.05)] dark:shadow-none group ${GLASS_HOVER_INTERACTIVE_CLASS}`;
 
 const Header = () => {
   const { lang, toggleLang, t } = useLang();
@@ -69,9 +70,10 @@ const Header = () => {
         {/* Settings panel — always in DOM, CSS grid-rows + width transition (droplet) */}
         <div
           aria-hidden={!isSettingsOpen}
-          className={`absolute top-full right-0 mt-3 mb-6 grid transition-[grid-template-rows,width] duration-[400ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
+          className={`absolute top-full right-0 mt-3 mb-6 grid transition-[grid-template-rows,width] duration-[400ms] ${
             isSettingsOpen ? 'grid-rows-[1fr] w-64 sm:w-72' : 'grid-rows-[0fr] w-32 sm:w-36'
           }`}
+          style={{ transitionTimingFunction: `cubic-bezier(${MOTION_EASE_SMOOTH.join(",")})` }}
         >
           <div className={`overflow-hidden min-h-0 ${!isSettingsOpen ? 'pointer-events-none' : ''}`}>
             <div className="px-1 pb-6">

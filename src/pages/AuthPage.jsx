@@ -6,32 +6,18 @@ import { toast } from "sonner";
 import Header from "../components/Header";
 import { useLang } from "../LangContext";
 import { AUTH_DEFAULT_EMOJI, useAuth } from "../AuthContext";
+import { MOTION_EASE_SMOOTH } from "../lib/motionTokens";
+import PageHeaderReveal from "../components/PageHeaderReveal";
+import AppBackground from "../shared/ui/AppBackground";
+import { EMAIL_RE, messageForAuthError } from "../features/auth/lib/authValidation";
+import AuthTabSwitch from "../features/auth/ui/AuthTabSwitch";
 
 const EMOJI_PRESET = [
   "⚡️", "🔥", "🪩", "🌈", "🦊", "🐙", "🐼", "🦄", "🍓", "🍀",
   "🌊", "🌙", "☀️", "🛰️", "🎧", "🎮", "📎", "🧠", "💎", "🪐",
 ];
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const IS_TEST_ENV = import.meta.env.MODE === "test";
-
-function messageForError(error, t) {
-  if (!error?.code) return error?.message || t.errorGeneric;
-  switch (error.code) {
-    case "user/email_exists":
-      return t.authErrorEmailExists;
-    case "user/username_exists":
-      return t.authErrorUsernameExists;
-    case "auth/incorrect_email_or_password":
-      return t.authErrorInvalidCredentials;
-    case "auth/not_authenticated":
-      return t.authErrorNotAuthenticated;
-    case "auth/token_expired":
-      return t.authErrorTokenExpired;
-    default:
-      return error.message || t.errorGeneric;
-  }
-}
 
 const fieldClass = (isError) =>
   `mt-2 w-full rounded-2xl border px-4 py-3 outline-none transition font-mono text-base tracking-[0.01em] placeholder:font-mono placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-white ${
@@ -39,47 +25,6 @@ const fieldClass = (isError) =>
       ? "border-red-500/70 focus:border-red-500 focus:ring-2 focus:ring-red-500/30 bg-red-500/5 shadow-[inset_0_2px_12px_rgba(239,68,68,0.15)]"
       : "border-white/50 dark:border-white/10 bg-white/25 dark:bg-black/30 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 shadow-[inset_0_2px_12px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_10px_0_rgba(255,255,255,0.05)]"
   }`;
-
-const AuthTabSwitch = ({ tab, onSwitch, t }) => (
-  <div className="w-full max-w-xl relative rounded-3xl border border-white/45 dark:border-white/10 bg-white/50 dark:bg-slate-900/35 backdrop-blur-[35px] p-1.5 shadow-lg dark:shadow-2xl overflow-hidden">
-    <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-blue-500/8 via-transparent to-purple-500/8" />
-    <div className="relative grid grid-cols-2 gap-1">
-      <button
-        type="button"
-        onClick={() => onSwitch("login")}
-        className="cursor-pointer relative py-3 rounded-2xl font-display font-bold text-sm sm:text-base"
-      >
-        {tab === "login" && (
-          <motion.div
-            layoutId="auth-tab-pill"
-            transition={{ type: "spring", stiffness: 420, damping: 35 }}
-            className="absolute inset-0 rounded-2xl bg-blue-500/18 dark:bg-blue-500/25 border border-blue-400/40 shadow-[0_8px_25px_rgba(59,130,246,0.22)]"
-          />
-        )}
-        <span className={`relative z-10 ${tab === "login" ? "text-blue-700 dark:text-white" : "text-slate-600 dark:text-slate-300"}`}>
-          {t.signIn}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onSwitch("register")}
-        className="cursor-pointer relative py-3 rounded-2xl font-display font-bold text-sm sm:text-base"
-      >
-        {tab === "register" && (
-          <motion.div
-            layoutId="auth-tab-pill"
-            transition={{ type: "spring", stiffness: 420, damping: 35 }}
-            className="absolute inset-0 rounded-2xl bg-blue-500/18 dark:bg-blue-500/25 border border-blue-400/40 shadow-[0_8px_25px_rgba(59,130,246,0.22)]"
-          />
-        )}
-        <span className={`relative z-10 ${tab === "register" ? "text-blue-700 dark:text-white" : "text-slate-600 dark:text-slate-300"}`}>
-          {t.signUp}
-        </span>
-      </button>
-    </div>
-  </div>
-);
 
 const AuthPage = ({ defaultTab = "login" }) => {
   const MotionDiv = motion.div;
@@ -219,7 +164,7 @@ const AuthPage = ({ defaultTab = "login" }) => {
       }
       navigate("/", { replace: true });
     } catch (error) {
-      toast.error(messageForError(error, t));
+      toast.error(messageForAuthError(error, t));
     } finally {
       setIsLoading(false);
     }
@@ -227,43 +172,39 @@ const AuthPage = ({ defaultTab = "login" }) => {
 
   return (
     <div className="min-h-screen text-slate-800 dark:text-slate-200 font-sans selection:bg-blue-500/30 relative overflow-hidden transition-colors duration-500">
-      <div className="fixed top-[-20%] sm:top-[-15%] left-[50%] -translate-x-1/2 w-[300px] sm:w-[800px] h-[300px] sm:h-[400px] rounded-[100%] bg-blue-500/10 dark:bg-blue-500/20 blur-[120px] sm:blur-[140px] pointer-events-none z-0 animate-float-delayed" />
-      <div className="fixed top-[-10%] left-[-10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-blue-500/20 dark:bg-blue-600/30 blur-[110px] sm:blur-[130px] pointer-events-none z-0 animate-float" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[350px] sm:w-[600px] h-[350px] sm:h-[600px] rounded-full bg-purple-500/10 dark:bg-purple-600/20 blur-[130px] sm:blur-[150px] pointer-events-none z-0 animate-float-delayed" />
-      <div className="fixed top-[30%] left-[40%] w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] rounded-full bg-indigo-500/10 dark:bg-indigo-500/20 blur-[100px] sm:blur-[120px] pointer-events-none z-0 animate-float" />
+      <AppBackground />
 
       <Header />
 
-      <main className="min-h-screen max-w-4xl mx-auto px-4 sm:px-6 pt-28 sm:pt-32 pb-10 flex flex-col items-center justify-center gap-4 sm:gap-6">
-        <MotionDiv
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
+      <main className="min-h-screen max-w-4xl mx-auto px-4 sm:px-6 pt-28 sm:pt-32 pb-10 flex flex-col items-center justify-center gap-5 sm:gap-6">
+        <PageHeaderReveal
+          title={title}
+          subtitle={subtitle}
           className="text-center space-y-2"
-        >
-          <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">{title}</h1>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">{subtitle}</p>
-        </MotionDiv>
+          titleClassName="font-display text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white"
+          subtitleClassName="text-sm sm:text-base text-slate-600 dark:text-slate-400"
+        />
 
         <AuthTabSwitch tab={tab} onSwitch={switchTab} t={t} />
 
-        <form onSubmit={onSubmit} noValidate className="w-full max-w-xl space-y-4 pb-3 dark:pb-0">
+        <form onSubmit={onSubmit} noValidate className="w-full max-w-xl space-y-4 sm:space-y-4 pb-3 dark:pb-0">
             <div
               className={`grid origin-center mx-auto transition-[grid-template-rows,width] duration-[400ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
                 step0Expanded ? "grid-rows-[1fr] w-full" : "grid-rows-[0fr] w-36 sm:w-40"
               }`}
             >
-              <div className="overflow-hidden min-h-0 px-1 pb-3">
+              <div className="overflow-hidden min-h-0 px-1 pb-1">
                 <MotionDiv
                   initial={false}
                   animate={{ opacity: step0Expanded ? 1 : 0 }}
-                  transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+                  transition={{ duration: 0.28, ease: MOTION_EASE_SMOOTH }}
                   className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-6 pb-7 sm:pb-9 dark:pb-6 relative overflow-hidden transition-shadow duration-300"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent dark:from-white/5 pointer-events-none" />
                   <div className="relative z-10 space-y-4">
                     <div
-                      className={`grid transition-[grid-template-rows,margin-bottom,opacity] duration-[320ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
-                        tab === "register" ? "grid-rows-[1fr] opacity-100 mb-0" : "grid-rows-[0fr] opacity-0 mb-[-0.5rem]"
+                      className={`grid transition-[grid-template-rows,opacity] duration-[320ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                        tab === "register" ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                       }`}
                     >
                       <div className="overflow-hidden min-h-0">
@@ -316,7 +257,15 @@ const AuthPage = ({ defaultTab = "login" }) => {
                         />
                         <button
                           type="button"
-                          onClick={() => setIsPasswordVisible((prev) => !prev)}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setIsPasswordVisible((prev) => !prev);
+                          }}
                           className="cursor-pointer absolute right-3 top-[calc(50%+0.25rem)] -translate-y-1/2 h-8 w-8 rounded-xl border border-white/50 dark:border-white/10 bg-white/45 dark:bg-slate-900/40 text-slate-500 hover:text-blue-500 hover:border-blue-400 transition-colors flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/35"
                           aria-label={isPasswordVisible ? "Hide password" : "Show password"}
                         >
@@ -331,14 +280,14 @@ const AuthPage = ({ defaultTab = "login" }) => {
 
             <div
               className={`grid origin-center mx-auto transition-[grid-template-rows,width] duration-[400ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
-                step1Expanded ? "grid-rows-[1fr] w-full mt-3" : "grid-rows-[0fr] w-40 sm:w-44"
+                step1Expanded ? "grid-rows-[1fr] w-full mt-2" : "grid-rows-[0fr] w-40 sm:w-44"
               }`}
             >
-              <div className="overflow-hidden min-h-0 px-1 pb-3">
+              <div className="overflow-hidden min-h-0 px-1 pb-1">
                 <MotionDiv
                   initial={false}
                   animate={{ opacity: step1Expanded ? 1 : 0 }}
-                  transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+                  transition={{ duration: 0.28, ease: MOTION_EASE_SMOOTH }}
                   className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-6 pb-5 sm:pb-7 dark:pb-6 relative overflow-hidden transition-shadow duration-300"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent dark:from-white/5 pointer-events-none" />

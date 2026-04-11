@@ -5,33 +5,19 @@ import { useRecentLinks } from '../hooks/useRecentLinks';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { QRCodeCanvas } from 'qrcode.react';
-import { ApiError, apiPostJson } from '../lib/api';
+import { ApiError, apiPostJson } from '../shared/lib/api';
 import { downloadCanvasAsJpg } from '../lib/downloadImage';
-import ActionIconButton from './ActionIconButton';
-
-const reservedWords = [
-    'docs', 'redoc', 'openapi.json', 'short_url', 'auth', 'me', 'api', 'admin',
-    'health', 'metrics', 'graphql', 'ws',
-    'login', 'register', 'profile', 'placeholder', 'profile-placeholder',
-    'favicon.ico', 'favicon', 'robots.txt', 'robots', 'sitemap.xml', 'sitemap',
-    'manifest.webmanifest', 'manifest', 'assets', 'static', 'public',
-    'img', 'images', 'fonts', 'css', 'js', 'uploads', 'media',
-    'about', 'contact', 'privacy', 'terms', 'support', 'help', 'status',
-    'dashboard', 'settings', 'shorty',
-    'апи', 'админ', 'доки', 'вход', 'регистрация', 'профиль', 'настройки',
-];
-
-const validateSlug = (slugText) => {
-    if (!slugText) return 'slugErrorLength';
-    if (slugText.length < 6 || slugText.length > 30) return 'slugErrorLength';
-    if (!/^[a-zA-Zа-яА-ЯёЁ0-9_-]+$/.test(slugText)) return 'slugErrorChars';
-    if (reservedWords.includes(slugText.toLowerCase())) return 'slugErrorReserved';
-    return '';
-};
+import CardActions from './CardActions';
+import { GLASS_HOVER_INTERACTIVE_CLASS, MOTION_DURATION, MOTION_EASE_SMOOTH, MOTION_TRANSITION } from '../lib/motionTokens';
+import { copyTextToClipboard } from '../shared/lib/clipboard';
+import { validateSlug } from '../features/shorten/model/slug';
 
 const DRAFT_STORAGE_KEY = 'shorty-shorten-draft';
 const SHORTEN_INPUT_CLASS =
-    "flex-1 w-full bg-transparent py-3 focus:outline-none font-mono text-base tracking-normal placeholder:font-mono placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-white";
+    "flex-1 w-full bg-transparent py-3 focus:outline-none font-mono text-base tracking-[0.01em] placeholder:font-mono placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-white";
+
+const BTN_GO =
+    "flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]";
 
 const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
     const [isCopied, setIsCopied] = useState(false);
@@ -40,16 +26,8 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
 
     const handleCopy = async () => {
         try {
-            if (navigator?.clipboard?.writeText) {
-                await navigator.clipboard.writeText(link.shortUrl);
-            } else {
-                const el = document.createElement('textarea');
-                el.value = link.shortUrl;
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
-            }
+            const ok = await copyTextToClipboard(link.shortUrl);
+            if (!ok) throw new Error("copy-failed");
             setIsCopied(true);
             setTimeout(() => setIsCopied(false), 2000);
             toast.success(t.copySuccess);
@@ -60,12 +38,18 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
 
     return (
         <Motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            className="group bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col hover:bg-white/25 dark:hover:bg-white/10 transition-all duration-300 shadow-md"
+            layout
+            initial={{ opacity: 0, y: 8, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{
+                layout: { duration: MOTION_DURATION.normal, ease: MOTION_EASE_SMOOTH },
+                opacity: { duration: MOTION_DURATION.fast, delay: idx * 0.055 },
+                y: { duration: MOTION_DURATION.normal, delay: idx * 0.055, ease: MOTION_EASE_SMOOTH },
+                scale: { duration: MOTION_DURATION.fast, delay: idx * 0.055 }
+            }}
+            className={`group bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col hover:bg-white/25 dark:hover:bg-white/10 shadow-md ${GLASS_HOVER_INTERACTIVE_CLASS}`}
         >
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                 <div className="flex flex-col overflow-hidden">
                     <span className="text-blue-600 dark:text-blue-400 font-mono text-xs sm:text-base font-bold truncate">
                         {link.shortUrl}
@@ -74,35 +58,40 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
                         {link.original}
                     </span>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    <ActionIconButton
-                        whileTap={{ scale: 0.9 }}
-                        onClick={onToggleQr}
-                        variant={isQrOpen ? "active" : "default"}
-                        aria-label={t.downloadQRBtn}
-                    >
-                        <QrCode size={18} />
-                    </ActionIconButton>
-                    <ActionIconButton
-                        whileTap={{ scale: 0.92 }}
-                        onClick={handleCopy}
-                        title={t.copyBtn}
-                        variant={isCopied ? "success" : "default"}
-                        aria-label={t.copyBtn}
-                    >
-                        {isCopied ? <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={18} />}
-                    </ActionIconButton>
-                    <Motion.a
-                        whileTap={{ scale: 0.92 }}
-                        href={`${window.location.protocol}//${link.shortUrl}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        title="Open Link"
-                        className="flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]"
-                    >
-                        <ExternalLink size={18} />
-                    </Motion.a>
-                </div>
+                <CardActions
+                    actions={[
+                        {
+                            key: "qr",
+                            whileTap: { scale: 0.9 },
+                            onClick: onToggleQr,
+                            variant: isQrOpen ? "active" : "default",
+                            ariaLabel: t.downloadQRBtn,
+                            icon: <QrCode size={18} />
+                        },
+                        {
+                            key: "copy",
+                            whileTap: { scale: 0.92 },
+                            onClick: handleCopy,
+                            title: t.copyBtn,
+                            variant: isCopied ? "success" : "default",
+                            ariaLabel: t.copyBtn,
+                            icon: isCopied ? <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={18} />
+                        },
+                        {
+                            key: "open",
+                            type: "link",
+                            whileTap: { scale: 0.92 },
+                            href: `${window.location.protocol}//${link.shortUrl}`,
+                            target: "_blank",
+                            rel: "noreferrer",
+                            title: "Open Link",
+                            ariaLabel: "Open Link",
+                            className: BTN_GO,
+                            icon: <ExternalLink size={18} />
+                        }
+                    ]}
+                    centered
+                />
             </div>
 
             {/* QR Code Expansion for Recent Link */}
@@ -112,7 +101,7 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                        transition={MOTION_TRANSITION.droplet}
                         className="overflow-hidden flex flex-col items-center gap-3"
                     >
                         <div className="w-full border-t border-slate-200/50 dark:border-white/10 mt-3 pt-3 flex flex-col items-center gap-3">
@@ -138,7 +127,7 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
                                     const ok = downloadCanvasAsJpg(qrCanvasId, `shorty-qr-${idx}.jpg`, { quality: 0.96, scale: 4 });
                                     if (!ok) toast.error("Ошибка: QR-Код не найден");
                                 }}
-                                className="flex items-center gap-2 cursor-pointer text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                                className="flex items-center gap-2 cursor-pointer text-xs font-mono font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                             >
                                 <Download size={14} />
                                 {t.downloadQRBtn}
@@ -167,6 +156,7 @@ const ShortenForm = () => {
     const [isCopied, setIsCopied] = useState(false);
     const [showQR, setShowQR] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [isHistoryLoading, setIsHistoryLoading] = useState(false);
     const [expandedRecentQrId, setExpandedRecentQrId] = useState(null);
     const [errorField, setErrorField] = useState(null); // 'long_url' | 'slug' | null
 
@@ -302,16 +292,8 @@ const ShortenForm = () => {
 
     const copyToClipboard = async (textToCopy = shortUrl) => {
         try {
-            if (navigator?.clipboard?.writeText) {
-                await navigator.clipboard.writeText(textToCopy);
-            } else {
-                const el = document.createElement('textarea');
-                el.value = textToCopy;
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
-            }
+            const ok = await copyTextToClipboard(textToCopy);
+            if (!ok) throw new Error("copy-failed");
 
             if (textToCopy === shortUrl) {
                 setIsCopied(true);
@@ -337,7 +319,7 @@ const ShortenForm = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
                     duration: 0.5,
-                    layout: { duration: 0.4, ease: [0.23, 1, 0.32, 1] }
+                    layout: MOTION_TRANSITION.droplet
                 }}
                 className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-8 pb-5 sm:pb-9 dark:pb-8 relative overflow-hidden transition-shadow duration-300"
             >
@@ -399,7 +381,7 @@ const ShortenForm = () => {
 
                     {/* Checkbox for custom link */}
                     <div className="flex items-center justify-end w-full px-4 gap-3 mb-2">
-                        <span id="custom-slug-label" className="text-sm text-slate-600 dark:text-slate-400 font-medium cursor-pointer select-none transition-colors" onClick={handleCustomSlugToggle}>
+                        <span id="custom-slug-label" className="text-xs sm:text-sm font-mono tracking-[0.01em] text-slate-600 dark:text-slate-400 font-medium cursor-pointer select-none transition-colors" onClick={handleCustomSlugToggle}>
                             {t.customSlugLabel}
                         </span>
                         <Motion.button
@@ -415,39 +397,31 @@ const ShortenForm = () => {
                     </div>
 
                     {/* Custom Slug Input */}
-                    <AnimatePresence>
-                        {isCustomSlug && (
-                            <Motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                                className="overflow-hidden transform-gpu"
-                            >
-                                <div className="pt-2 pb-6">
-                                    <div className={`flex items-center gap-3 bg-white/15 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border transition-all shadow-inner ${
-                                        errorField === 'slug' 
-                                        ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] bg-red-500/5' 
-                                        : 'border-white/20 dark:border-white/5 border-t-white/30'
-                                    }`}>
-                                        <span className="text-slate-400 dark:text-slate-500 pl-4 font-mono select-none">шорти.рф/</span>
-                                        <input
-                                            type="text"
-                                            maxLength="30"
-                                            aria-label={t.customSlugLabel}
-                                            placeholder={t.customSlugPlaceholder}
-                                            className={SHORTEN_INPUT_CLASS}
-                                            value={customSlug}
-                                            onChange={(e) => {
-                                                setCustomSlug(e.target.value);
-                                                if(errorField === 'slug') setErrorField(null);
-                                            }}
-                                        />
-                                    </div>
+                    <div className={`grid transition-[grid-template-rows,opacity] duration-[420ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${isCustomSlug ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                        <div className="overflow-hidden transform-gpu min-h-0">
+                            <div className="pt-2 pb-6">
+                                <div className={`flex items-center gap-3 bg-white/15 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border transition-all shadow-inner ${
+                                    errorField === 'slug'
+                                    ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] bg-red-500/5'
+                                    : 'border-white/20 dark:border-white/5 border-t-white/30'
+                                }`}>
+                                    <span className="text-slate-400 dark:text-slate-500 pl-4 font-mono select-none">шорти.рф/</span>
+                                    <input
+                                        type="text"
+                                        maxLength="30"
+                                        aria-label={t.customSlugLabel}
+                                        placeholder={t.customSlugPlaceholder}
+                                        className={SHORTEN_INPUT_CLASS}
+                                        value={customSlug}
+                                        onChange={(e) => {
+                                            setCustomSlug(e.target.value);
+                                            if(errorField === 'slug') setErrorField(null);
+                                        }}
+                                    />
                                 </div>
-                            </Motion.div>
-                        )}
-                    </AnimatePresence>
+                            </div>
+                        </div>
+                    </div>
                 </Motion.form>
 
                 {/* Результат */}
@@ -456,47 +430,49 @@ const ShortenForm = () => {
                         <Motion.div 
                             initial={{ y: 30, opacity: 0, scale: 0.95 }}
                             animate={{ y: 0, opacity: 1, scale: 1 }}
-                            className="mt-4 sm:mt-10 p-4 sm:p-8 bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative overflow-hidden"
+                            className={`mt-4 sm:mt-10 p-4 sm:p-8 bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative overflow-hidden ${GLASS_HOVER_INTERACTIVE_CLASS}`}
                         >
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 opacity-50" />
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-8">
                                 <div className="flex flex-col w-full overflow-hidden">
-                                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">{t.success}</span>
+                                    <span className="text-xs font-mono tracking-[0.01em] text-slate-500 dark:text-slate-400 font-medium mb-1">{t.success}</span>
                                     <span className="text-blue-600 dark:text-blue-300 font-mono text-xl truncate selection:bg-blue-200 dark:selection:bg-blue-400/20">
                                         {shortUrl}
                                     </span>
                                 </div>
-                                <div className="flex gap-2 full md:w-auto shrink-0 flex-wrap">
-                                    <ActionIconButton
-                                        whileTap={{ scale: 0.92 }}
-                                        onClick={() => setShowQR(!showQR)}
-                                        aria-label={t.downloadQRBtn}
-                                        variant={showQR ? "active" : "default"}
-                                        className="flex-1 md:flex-none"
-                                    >
-                                        <QrCode size={18} />
-                                    </ActionIconButton>
-                                    <ActionIconButton
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => copyToClipboard()}
-                                        aria-label={t.copyBtn}
-                                        title={t.copyBtn}
-                                        variant={isCopied ? "success" : "default"}
-                                        className="flex-1 md:flex-none"
-                                    >
-                                        {isCopied ? <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={18} />}
-                                    </ActionIconButton>
-                                    <Motion.a
-                                        whileTap={{ scale: 0.92 }}
-                                        href={`${window.location.protocol}//${shortUrl}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        aria-label="Open short link"
-                                        className="flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]"
-                                    >
-                                        <ExternalLink size={18} />
-                                    </Motion.a>
-                                </div>
+                                <CardActions
+                                    actions={[
+                                        {
+                                            key: "qr",
+                                            whileTap: { scale: 0.92 },
+                                            onClick: () => setShowQR(!showQR),
+                                            ariaLabel: t.downloadQRBtn,
+                                            variant: showQR ? "active" : "default",
+                                            icon: <QrCode size={18} />
+                                        },
+                                        {
+                                            key: "copy",
+                                            whileTap: { scale: 0.95 },
+                                            onClick: () => copyToClipboard(),
+                                            ariaLabel: t.copyBtn,
+                                            title: t.copyBtn,
+                                            variant: isCopied ? "success" : "default",
+                                            icon: isCopied ? <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={18} />
+                                        },
+                                        {
+                                            key: "open",
+                                            type: "link",
+                                            whileTap: { scale: 0.92 },
+                                            href: `${window.location.protocol}//${shortUrl}`,
+                                            target: "_blank",
+                                            rel: "noreferrer",
+                                            ariaLabel: "Open short link",
+                                            className: BTN_GO,
+                                            icon: <ExternalLink size={18} />
+                                        }
+                                    ]}
+                                    centered
+                                />
                             </div>
 
                             {/* QR Code Expansion */}
@@ -506,7 +482,7 @@ const ShortenForm = () => {
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: 'auto', opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
-                                        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                                        transition={MOTION_TRANSITION.droplet}
                                         className="overflow-hidden flex flex-col items-center gap-4"
                                     >
                                         <div className="w-full border-t border-slate-200 dark:border-white/10 mt-5 pt-5 flex flex-col items-center gap-4">
@@ -570,7 +546,14 @@ const ShortenForm = () => {
                                     borderColor: "rgba(255, 255, 255, 0.4)",
                                     y: -1
                                 }}
-                                onClick={() => setShowHistory(!showHistory)}
+                                onClick={() => {
+                                    const willOpen = !showHistory;
+                                    setShowHistory(willOpen);
+                                    if (willOpen) {
+                                        setIsHistoryLoading(true);
+                                        window.setTimeout(() => setIsHistoryLoading(false), 320);
+                                    }
+                                }}
                                 className="cursor-pointer flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-[30px] border border-white/20 dark:border-white/10 border-t-white/30 dark:border-t-white/10 text-slate-500 dark:text-slate-300 transition-all text-sm font-semibold shadow-lg overflow-hidden relative group perspective-1000"
                             >
                                 <Motion.div
@@ -594,12 +577,12 @@ const ShortenForm = () => {
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: "auto", opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
-                                        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                                        transition={MOTION_TRANSITION.droplet}
                                         className="overflow-hidden w-full"
                                     >
                                         <div className="px-1 sm:px-6 pt-4 pb-3">
                                         <div className="flex items-center justify-between mb-4 px-2">
-                                            <span className="text-xs font-medium text-slate-400">
+                                            <span className="text-xs font-mono tracking-[0.01em] font-medium text-slate-400">
                                                 {t.fiveLastLinks}
                                             </span>
                                             <Motion.button
@@ -616,20 +599,30 @@ const ShortenForm = () => {
                                         </div>
 
                                         <div className="flex flex-col gap-3">
-                                            {recentLinks.map((link, idx) => (
-                                                <RecentLinkItem
-                                                    key={link.shortUrl + idx}
-                                                    link={link}
-                                                    idx={idx}
-                                                    t={t}
-                                                    isQrOpen={expandedRecentQrId === `${link.shortUrl}-${idx}`}
-                                                    onToggleQr={() =>
-                                                        setExpandedRecentQrId((prev) =>
-                                                            prev === `${link.shortUrl}-${idx}` ? null : `${link.shortUrl}-${idx}`,
-                                                        )
-                                                    }
-                                                />
-                                            ))}
+                                            {isHistoryLoading
+                                                ? Array.from({ length: Math.min(3, recentLinks.length) }).map((_, idx) => (
+                                                    <div
+                                                        key={`recent-skeleton-${idx}`}
+                                                        className="rounded-2xl p-3 sm:p-4 bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 animate-pulse"
+                                                    >
+                                                        <div className="h-4 w-44 bg-white/40 dark:bg-white/10 rounded mb-2" />
+                                                        <div className="h-3 w-full bg-white/35 dark:bg-white/10 rounded" />
+                                                    </div>
+                                                ))
+                                                : recentLinks.map((link, idx) => (
+                                                    <RecentLinkItem
+                                                        key={link.shortUrl + idx}
+                                                        link={link}
+                                                        idx={idx}
+                                                        t={t}
+                                                        isQrOpen={expandedRecentQrId === `${link.shortUrl}-${idx}`}
+                                                        onToggleQr={() =>
+                                                            setExpandedRecentQrId((prev) =>
+                                                                prev === `${link.shortUrl}-${idx}` ? null : `${link.shortUrl}-${idx}`,
+                                                            )
+                                                        }
+                                                    />
+                                                ))}
                                         </div>
                                         </div>
                                     </Motion.div>

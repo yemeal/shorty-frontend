@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Header from '../components/Header';
-import ShortenForm from '../components/ShortenForm';
+import ShortenForm from '../features/shorten/ui/ShortenForm';
 import { Zap, CheckCircle2, Globe } from 'lucide-react';
+import PageHeaderReveal from '../components/PageHeaderReveal';
+import AppBackground from '../shared/ui/AppBackground';
+import { GLASS_HOVER_INTERACTIVE_CLASS } from '../lib/motionTokens';
+import { useLang } from '../LangContext';
 
 const GithubIcon = ({ size = 16, className = "" }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -9,7 +13,6 @@ const GithubIcon = ({ size = 16, className = "" }) => (
         <path d="M9 18c-4.51 2-5-2-7-2"/>
     </svg>
 );
-import { useLang } from '../LangContext';
 
 const HomePage = () => {
     const { t } = useLang();
@@ -24,28 +27,27 @@ const HomePage = () => {
 
     return (
         <div className="min-h-screen text-slate-800 dark:text-slate-200 font-sans selection:bg-blue-500/30 relative overflow-hidden transition-colors duration-500">
-            {/* Liquid Glass Background Elements */}
-            <div className="fixed top-[-20%] sm:top-[-15%] left-[50%] -translate-x-1/2 w-[300px] sm:w-[800px] h-[300px] sm:h-[400px] rounded-[100%] bg-blue-500/10 dark:bg-blue-500/20 blur-[120px] sm:blur-[140px] pointer-events-none z-0 animate-float-delayed transform-gpu will-change-transform" />
-            <div className="fixed top-[-10%] left-[-10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-blue-500/20 dark:bg-blue-600/30 blur-[110px] sm:blur-[130px] pointer-events-none z-0 animate-float transform-gpu will-change-transform" />
-            <div className="fixed bottom-[-10%] right-[-10%] w-[350px] sm:w-[600px] h-[350px] sm:h-[600px] rounded-full bg-purple-500/10 dark:bg-purple-600/20 blur-[130px] sm:blur-[150px] pointer-events-none z-0 animate-float-delayed transform-gpu will-change-transform" />
-            <div className="fixed top-[30%] left-[40%] w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] rounded-full bg-indigo-500/10 dark:bg-indigo-500/20 blur-[100px] sm:blur-[120px] pointer-events-none z-0 animate-float transform-gpu will-change-transform" />
+            <AppBackground />
 
             <Header />
 
             {/* Основной контент */}
             <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-32 sm:pt-40 pb-12 flex flex-col items-center">
 
-                <div className="text-center space-y-4 sm:space-y-6 mb-10 sm:mb-14 relative z-10 w-full transition-all duration-500">
-                    <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
-                        {t.title1} <br />
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 drop-shadow-sm dark:drop-shadow-lg">
-                            {t.title2}
-                        </span>
-                    </h1>
-                    <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto leading-relaxed px-4 transition-colors">
-                        {t.subtitle}
-                    </p>
-                </div>
+                <PageHeaderReveal
+                    title={
+                        <>
+                            {t.title1} <br />
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 drop-shadow-sm dark:drop-shadow-lg">
+                                {t.title2}
+                            </span>
+                        </>
+                    }
+                    subtitle={t.subtitle}
+                    className="text-center space-y-4 sm:space-y-6 mb-10 sm:mb-14 relative z-10 w-full transition-all duration-500"
+                    titleClassName="font-display text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight"
+                    subtitleClassName="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto leading-relaxed px-4 transition-colors"
+                />
 
                 {/* Форма */}
                 <ShortenForm />
@@ -57,7 +59,7 @@ const HomePage = () => {
                         { title: t.feat2Title, desc: t.feat2Desc, icon: <CheckCircle2 size={22} className="text-indigo-500/80 dark:text-indigo-400" /> },
                         { title: t.feat3Title, desc: t.feat3Desc, icon: <Globe size={22} className="text-purple-500/80 dark:text-purple-400" /> }
                     ].map((item, i) => (
-                        <div key={i} className="group bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 p-8 rounded-3xl hover:-translate-y-2 transition-all duration-500 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.1)]">
+                        <div key={i} className={`group bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 p-8 rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none ${GLASS_HOVER_INTERACTIVE_CLASS}`}>
                             <div className="bg-gradient-to-br from-white/10 to-transparent w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border border-white/40 dark:border-white/5 shadow-sm group-hover:scale-110 group-hover:rotate-[5deg] transition-all duration-500">
                                 {item.icon}
                             </div>
