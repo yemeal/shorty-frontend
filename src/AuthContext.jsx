@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { apiFetch, apiPostForm, apiPostJson } from "./lib/api";
+import { apiFetch, apiPostForm, apiPostJson } from "./shared/lib/api";
 
 const USER_STORAGE_KEY = "shorty-auth-user";
 const DEFAULT_EMOJI = "⚡️";
@@ -7,6 +7,10 @@ const REFRESH_INTERVAL_MS = 8 * 60 * 1000;
 
 const AuthContext = createContext(null);
 
+/**
+ * Reads persisted auth snapshot from localStorage.
+ * This snapshot is used for instant client boot while session refresh runs.
+ */
 function readStoredUser() {
   try {
     const raw = localStorage.getItem(USER_STORAGE_KEY);
@@ -34,6 +38,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => readStoredUser());
   const [isBootstrapping, setIsBootstrapping] = useState(true);
 
+  /**
+   * Commits user state to both React state and localStorage.
+   */
   const commitUser = useCallback((nextUser) => {
     setUser(nextUser);
     storeUser(nextUser);
@@ -92,10 +99,14 @@ export const AuthProvider = ({ children }) => {
     }
   }, [commitUser]);
 
+  /**
+   * Refreshes cookie-based auth session.
+   * `silent` refreshes should not trigger global network indicator.
+   */
   const refreshSession = useCallback(
     async ({ clearOnFail = false } = {}) => {
       try {
-        await apiFetch("/auth/refresh", { method: "POST" });
+        await apiFetch("/auth/refresh", { method: "POST", silent: true });
         return true;
       } catch {
         if (clearOnFail) {

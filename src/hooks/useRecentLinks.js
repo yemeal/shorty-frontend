@@ -59,7 +59,9 @@ export function useRecentLinks() {
         setRecentLinks([]);
         try {
             localStorage.removeItem(STORAGE_KEY);
-        } catch {}
+        } catch {
+            // ignore storage errors in cleanup path
+        }
     }, []);
 
     return { recentLinks, addLink, clearHistory };

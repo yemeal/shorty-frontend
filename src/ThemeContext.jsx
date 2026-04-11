@@ -2,10 +2,20 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
+/**
+ * Global light/dark theme provider with persisted preference.
+ */
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('shorty-theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
   const [isAntigravity, setIsAntigravity] = useState(false);
 
+  /**
+   * Applies active theme class to `<html>`.
+   */
   const updateDOM = (mode) => {
     if (mode === 'dark') {
       document.documentElement.classList.add('dark');
@@ -15,25 +25,18 @@ export const ThemeProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Check local storage or system preference
-    const savedTheme = localStorage.getItem('shorty-theme');
-    if (savedTheme) {
-      setTheme(savedTheme);
-      updateDOM(savedTheme);
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
-      updateDOM(prefersDark ? 'dark' : 'light');
-    }
-  }, []);
+    updateDOM(theme);
+    localStorage.setItem('shorty-theme', theme);
+  }, [theme]);
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
-    localStorage.setItem('shorty-theme', next);
-    updateDOM(next);
   };
 
+  /**
+   * Fun easter-egg animation trigger used from settings panel.
+   */
   const triggerAntigravity = () => {
     setIsAntigravity(true);
     // Add the class to body to trigger the rotation
