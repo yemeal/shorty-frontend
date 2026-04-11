@@ -1,3 +1,5 @@
+import { beginNetworkRequest, endNetworkRequest } from "./networkActivity";
+
 export class ApiError extends Error {
   constructor(message, options = {}) {
     super(message);
@@ -68,10 +70,18 @@ function toApiError(response, payload) {
 
 export async function apiFetch(path, options = {}) {
   // `credentials: include` is required for HttpOnly access/refresh cookies.
-  const response = await fetch(path, {
-    credentials: "include",
-    ...options,
-  });
+  const silent = Boolean(options.silent);
+  if (!silent) beginNetworkRequest();
+
+  let response;
+  try {
+    response = await fetch(path, {
+      credentials: "include",
+      ...options,
+    });
+  } finally {
+    if (!silent) endNetworkRequest();
+  }
 
   const payload = await parseResponseBody(response);
   if (!response.ok) {
