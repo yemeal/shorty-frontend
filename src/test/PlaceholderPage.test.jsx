@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, fireEvent, within } from "@testing-library/react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
 import ProfilePage from "../pages/ProfilePage";
 import { renderWithProviders } from "./helpers";
+import { installProfileShortUrlsFetchMock } from "./profileShortUrlsApiMock";
 
 vi.mock("qrcode.react", () => ({
   QRCodeCanvas: (props) => <canvas data-testid="qr-canvas" id={props.id} />,
@@ -14,11 +15,14 @@ beforeEach(() => {
     JSON.stringify({ username: "testuser", email: "a@b.c", emoji: "🦊" }),
   );
   vi.restoreAllMocks();
-  vi.spyOn(globalThis, "fetch").mockResolvedValue({
-    ok: true,
-    text: async () => JSON.stringify({ ok: true }),
-  });
+  installProfileShortUrlsFetchMock();
 });
+
+async function expectArticleCount(n) {
+  await waitFor(() => {
+    expect(screen.getAllByRole("article")).toHaveLength(n);
+  });
+}
 
 describe("ProfilePage — render", () => {
   it("renders profile title", () => {
@@ -46,152 +50,193 @@ describe("ProfilePage — render", () => {
 });
 
 describe("ProfilePage — shorties list", () => {
-  it("renders 5 shorty cards on page 1", () => {
+  it("renders 5 shorty cards on page 1", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
-    const articles = screen.getAllByRole("article");
-    expect(articles).toHaveLength(5);
+    await expectArticleCount(5);
   });
 
-  it("shows pagination badge with correct range", () => {
+  it("shows pagination badge with correct range", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
-    expect(screen.getByText(/1-5 (из|of) 8/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/1-5 (из|of) 8/)).toBeInTheDocument();
+    });
   });
 
-  it("shows page info in pagination bar", () => {
+  it("shows page info in pagination bar", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
-    expect(screen.getByText(/1 \/ 2/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/1 \/ 2/)).toBeInTheDocument();
+    });
   });
 
-  it("navigates to page 2", () => {
+  it("navigates to page 2", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
-    const nextBtn = screen.getByText(/Next|Вперёд/i);
-    fireEvent.click(nextBtn);
-    const articles = screen.getAllByRole("article");
-    expect(articles).toHaveLength(3);
-    expect(screen.getByText(/6-8 (из|of) 8/)).toBeInTheDocument();
+    await expectArticleCount(5);
+    fireEvent.click(screen.getByText(/Next|Вперёд/i));
+    await expectArticleCount(3);
+    await waitFor(() => {
+      expect(screen.getByText(/6-8 (из|of) 8/)).toBeInTheDocument();
+    });
   });
 
-  it("prev button disabled on page 1", () => {
+  it("prev button disabled on page 1", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await expectArticleCount(5);
     const prevBtn = screen.getByText(/Prev|Назад/i);
     expect(prevBtn).toBeDisabled();
   });
 
-  it("next button disabled on last page", () => {
+  it("next button disabled on last page", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await expectArticleCount(5);
     fireEvent.click(screen.getByText(/Next|Вперёд/i));
-    expect(screen.getByText(/Next|Вперёд/i)).toBeDisabled();
+    await expectArticleCount(3);
+    await waitFor(() => {
+      expect(screen.getByText(/Next|Вперёд/i)).toBeDisabled();
+    });
   });
 
-  it("prev returns to page 1", () => {
+  it("prev returns to page 1", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await expectArticleCount(5);
     fireEvent.click(screen.getByText(/Next|Вперёд/i));
+    await expectArticleCount(3);
     fireEvent.click(screen.getByText(/Prev|Назад/i));
-    expect(screen.getAllByRole("article")).toHaveLength(5);
+    await expectArticleCount(5);
   });
 });
 
 describe("ProfilePage — sort", () => {
-  it("default sort is newest first", () => {
+  it("default sort is newest first", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
-    const articles = screen.getAllByRole("article");
-    const first = within(articles[0]).getByText(/шорти\.рф\//);
-    expect(first.textContent).toContain("echo");
+    await waitFor(() => {
+      const articles = screen.getAllByRole("article");
+      expect(articles[0].textContent).toContain("echo");
+    });
   });
 
-  it("oldest-first sort works", () => {
+  it("oldest-first sort works", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await expectArticleCount(5);
     const select = screen.getByDisplayValue(/Newest|Сначала новые/i);
     fireEvent.change(select, { target: { value: "oldest" } });
-    const articles = screen.getAllByRole("article");
-    const first = within(articles[0]).getByText(/шорти\.рф\//);
-    expect(first.textContent).toContain("spacefox");
+    await waitFor(() => {
+      const articles = screen.getAllByRole("article");
+      expect(articles[0].textContent).toContain("spacefox");
+    });
   });
 
-  it("most-clicks sort works", () => {
+  it("most-clicks sort works", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await expectArticleCount(5);
     const select = screen.getByDisplayValue(/Newest|Сначала новые/i);
     fireEvent.change(select, { target: { value: "clicks_desc" } });
-    const articles = screen.getAllByRole("article");
-    const first = within(articles[0]).getByText(/шорти\.рф\//);
-    expect(first.textContent).toContain("ultra-read");
+    await waitFor(() => {
+      const articles = screen.getAllByRole("article");
+      expect(articles[0].textContent).toContain("ultra-read");
+    });
   });
 });
 
 describe("ProfilePage — search", () => {
-  it("filters by short URL", () => {
+  it("filters by short URL", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await expectArticleCount(5);
     const input = screen.getByPlaceholderText(/Search|Поиск/i);
     fireEvent.change(input, { target: { value: "echo" } });
-    expect(screen.getAllByRole("article")).toHaveLength(1);
+    await expectArticleCount(1);
   });
 
-  it("filters by original URL", () => {
+  it("filters by original URL", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await expectArticleCount(5);
     const input = screen.getByPlaceholderText(/Search|Поиск/i);
     fireEvent.change(input, { target: { value: "podcast" } });
-    expect(screen.getAllByRole("article")).toHaveLength(1);
+    await expectArticleCount(1);
   });
 
-  it("shows empty state when nothing matches", () => {
+  it("shows empty state when nothing matches", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await expectArticleCount(5);
     fireEvent.change(screen.getByPlaceholderText(/Search|Поиск/i), {
       target: { value: "zzzzzzzzzzz" },
     });
-    expect(screen.queryAllByRole("article")).toHaveLength(0);
+    await waitFor(() => {
+      expect(screen.queryAllByRole("article")).toHaveLength(0);
+    });
     expect(screen.getByText(/No shorties|По текущим/i)).toBeInTheDocument();
   });
 
-  it("resets page to 1 on search", () => {
+  it("resets page to 1 on search", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await expectArticleCount(5);
     fireEvent.click(screen.getByText(/Next|Вперёд/i));
+    await expectArticleCount(3);
     fireEvent.change(screen.getByPlaceholderText(/Search|Поиск/i), {
       target: { value: "spa" },
     });
-    expect(screen.getByText(/1 \/ 1/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/1 \/ 1/)).toBeInTheDocument();
+    });
   });
 });
 
 describe("ProfilePage — card buttons", () => {
-  it("has QR button on each card", () => {
+  it("has QR button on each card", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
-    const qrBtns = screen.getAllByLabelText(/QR/i);
-    expect(qrBtns.length).toBeGreaterThanOrEqual(5);
+    await waitFor(() => {
+      const qrBtns = screen.getAllByLabelText(/QR/i);
+      expect(qrBtns.length).toBeGreaterThanOrEqual(5);
+    });
   });
 
-  it("has copy button on each card", () => {
+  it("has copy button on each card", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
-    const copyBtns = screen.getAllByLabelText(/copy/i);
-    expect(copyBtns.length).toBeGreaterThanOrEqual(5);
+    await waitFor(() => {
+      const copyBtns = screen.getAllByLabelText(/copy/i);
+      expect(copyBtns.length).toBeGreaterThanOrEqual(5);
+    });
   });
 
-  it("has open link on each card", () => {
+  it("has open link on each card", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
-    const openBtns = screen.getAllByLabelText(/Open shorty/i);
-    expect(openBtns.length).toBeGreaterThanOrEqual(5);
+    await waitFor(() => {
+      const openBtns = screen.getAllByLabelText(/Open shorty/i);
+      expect(openBtns.length).toBeGreaterThanOrEqual(5);
+    });
   });
 
-  it("has edit button on each card", () => {
+  it("has edit button on each card", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
-    const editBtns = screen.getAllByLabelText(/Edit shorty/i);
-    expect(editBtns.length).toBeGreaterThanOrEqual(5);
+    await waitFor(() => {
+      const editBtns = screen.getAllByLabelText(/Edit shorty/i);
+      expect(editBtns.length).toBeGreaterThanOrEqual(5);
+    });
   });
 
-  it("has delete button on each card", () => {
+  it("has delete button on each card", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
-    const delBtns = screen.getAllByLabelText(/Delete shorty/i);
-    expect(delBtns.length).toBeGreaterThanOrEqual(5);
+    await waitFor(() => {
+      const delBtns = screen.getAllByLabelText(/Delete shorty/i);
+      expect(delBtns.length).toBeGreaterThanOrEqual(5);
+    });
   });
 
-  it("delete button is neutral until hover state", () => {
+  it("delete button is neutral until hover state", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await waitFor(() => {
+      expect(screen.getAllByLabelText(/Delete shorty/i).length).toBeGreaterThanOrEqual(1);
+    });
     const deleteButton = screen.getAllByLabelText(/Delete shorty/i)[0];
     expect(deleteButton.className).toContain("text-slate-500");
     expect(deleteButton.className).toContain("hover:text-red-500");
   });
 
-  it("QR button toggles QR code display", () => {
+  it("QR button toggles QR code display", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await waitFor(() => {
+      expect(screen.getAllByLabelText(/QR/i).length).toBeGreaterThanOrEqual(1);
+    });
     const qrBtns = screen.getAllByLabelText(/QR/i);
     fireEvent.click(qrBtns[0]);
     expect(screen.getByTestId("qr-canvas")).toBeInTheDocument();
@@ -202,33 +247,48 @@ describe("ProfilePage — card buttons", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, { clipboard: { writeText } });
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await waitFor(() => {
+      expect(screen.getAllByLabelText(/copy/i).length).toBeGreaterThanOrEqual(1);
+    });
     const copyBtns = screen.getAllByLabelText(/copy/i);
     fireEvent.click(copyBtns[0]);
     expect(writeText).toHaveBeenCalled();
   });
 
-  it("QR download button appears when QR expanded", () => {
+  it("QR download button appears when QR expanded", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await waitFor(() => {
+      expect(screen.getAllByLabelText(/QR/i).length).toBeGreaterThanOrEqual(1);
+    });
     fireEvent.click(screen.getAllByLabelText(/QR/i)[0]);
     expect(screen.getByText(/Download QR|Скачать QR/i)).toBeInTheDocument();
   });
 
-  it("uses two-row mobile-ready card layout", () => {
+  it("uses two-row mobile-ready card layout", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await waitFor(() => {
+      expect(screen.getAllByRole("article").length).toBeGreaterThanOrEqual(1);
+    });
     const firstArticle = screen.getAllByRole("article")[0];
     const row = firstArticle.querySelector("div.flex.flex-col.sm\\:flex-row");
     expect(row).toBeInTheDocument();
   });
 
-  it("centers card actions row", () => {
+  it("centers card actions row", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await waitFor(() => {
+      expect(screen.getAllByRole("article").length).toBeGreaterThanOrEqual(1);
+    });
     const firstArticle = screen.getAllByRole("article")[0];
     const actionsRow = firstArticle.querySelector("div.justify-center");
     expect(actionsRow).toBeInTheDocument();
   });
 
-  it("animates card collapse before deletion", () => {
+  it("animates card collapse before deletion", async () => {
     const { container } = renderWithProviders(<ProfilePage />, { route: "/profile" });
+    await waitFor(() => {
+      expect(screen.getAllByLabelText(/Delete shorty/i).length).toBeGreaterThanOrEqual(1);
+    });
     const deleteButton = screen.getAllByLabelText(/Delete shorty/i)[0];
     fireEvent.click(deleteButton);
     const collapsingWrapper = container.querySelector("div.grid.grid-rows-\\[0fr\\]");
