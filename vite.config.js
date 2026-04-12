@@ -37,6 +37,11 @@ export default defineConfig({
     })
   ],
   server: {
+    // Явный IPv4 + все интерфейсы: на Windows `localhost` иногда уходит в ::1,
+    // а запросы на 127.0.0.1 не попадают в тот же сокет (curl / браузер -102).
+    host: true,
+    port: 5173,
+    strictPort: true,
     proxy: {
       '/short_url': {
         target: 'http://127.0.0.1:8000',
