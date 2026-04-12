@@ -10,6 +10,7 @@ import { downloadCanvasAsJpg } from '../lib/downloadImage';
 import CardActions from './CardActions';
 import { GLASS_HOVER_INTERACTIVE_CLASS, MOTION_DURATION, MOTION_EASE_SMOOTH, MOTION_TRANSITION } from '../lib/motionTokens';
 import { copyTextToClipboard } from '../shared/lib/clipboard';
+import { buildPublicShortUrlDisplay } from '../shared/lib/publicShortUrl';
 import { validateSlug } from '../features/shorten/model/slug';
 
 const DRAFT_STORAGE_KEY = 'shorty-shorten-draft';
@@ -180,6 +181,7 @@ const ShortenForm = () => {
         }
     });
     const mainInputRef = useRef(null);
+    const customSlugInputRef = useRef(null);
 
     // History Hook
     const { recentLinks, addLink, clearHistory } = useRecentLinks();
@@ -257,9 +259,7 @@ const ShortenForm = () => {
             if (!createdSlug) {
                 throw new Error(t.errorGeneric);
             }
-            let originHost = window.location.host;
-            originHost = originHost.replace('xn--h1algi1a.xn--p1ai', 'шорти.рф');
-            const generatedUrl = `${originHost}/${createdSlug}`;
+            const generatedUrl = buildPublicShortUrlDisplay(createdSlug);
             setShortUrl(generatedUrl);
             toast.success("Готово!", { description: 'Ссылка успешно сокращена.' });
             localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -306,10 +306,11 @@ const ShortenForm = () => {
     };
 
     const handleCustomSlugToggle = () => {
-        setIsCustomSlug(!isCustomSlug);
         if (isCustomSlug) {
             setCustomSlug('');
+            customSlugInputRef.current?.blur();
         }
+        setIsCustomSlug(!isCustomSlug);
     };
 
     return (
@@ -397,7 +398,10 @@ const ShortenForm = () => {
                     </div>
 
                     {/* Custom Slug Input */}
-                    <div className={`grid transition-[grid-template-rows,opacity] duration-[420ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${isCustomSlug ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                    <div
+                        className={`grid transition-[grid-template-rows,opacity] duration-[420ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${isCustomSlug ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+                        aria-hidden={!isCustomSlug}
+                    >
                         <div className="overflow-hidden transform-gpu min-h-0">
                             <div className="pt-2 pb-6">
                                 <div className={`flex items-center gap-3 bg-white/15 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border transition-all shadow-inner ${
@@ -407,8 +411,10 @@ const ShortenForm = () => {
                                 }`}>
                                     <span className="text-slate-400 dark:text-slate-500 pl-4 font-mono select-none">шорти.рф/</span>
                                     <input
+                                        ref={customSlugInputRef}
                                         type="text"
                                         maxLength="30"
+                                        hidden={!isCustomSlug}
                                         aria-label={t.customSlugLabel}
                                         placeholder={t.customSlugPlaceholder}
                                         className={SHORTEN_INPUT_CLASS}
