@@ -66,15 +66,15 @@ const NetworkActivityIndicator = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.18 }}
-          className="fixed top-3 left-1/2 -translate-x-1/2 z-[120] pointer-events-none"
+          className="fixed left-1/2 z-[120] -translate-x-1/2 pointer-events-none top-[calc(1rem+75px+0.5rem)] sm:top-[calc(1.5rem+90px+0.5rem)]"
           aria-live="polite"
           aria-label="Network activity"
         >
-          <div className="h-1.5 w-28 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-white/10 backdrop-blur-xl overflow-hidden shadow-md">
+          <div className="h-2 w-40 sm:h-2.5 sm:w-52 rounded-full bg-white/75 dark:bg-slate-900/75 border border-white/60 dark:border-white/10 backdrop-blur-xl overflow-hidden shadow-md">
             <Motion.div
-              className="h-full w-10 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"
-              animate={{ x: ["-120%", "250%"] }}
-              transition={{ duration: 0.9, repeat: Infinity, ease: "linear" }}
+              className="h-full w-14 sm:w-16 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"
+              animate={{ x: ["-130%", "260%"] }}
+              transition={{ duration: 0.95, repeat: Infinity, ease: "linear" }}
             />
           </div>
         </Motion.div>
