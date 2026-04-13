@@ -106,7 +106,16 @@ export const translations = {
     logoutConfirmTitle: "Are you sure you want to sign out?",
     logoutConfirmYes: "Yes",
     logoutConfirmNo: "No",
-    profileResetFilters: "Reset filters"
+    profileResetFilters: "Reset filters",
+    profileCreateNewShorty: "Create new",
+    shortenSuccessTitle: "Done!",
+    shortenSuccessDescription: "Short link created successfully.",
+    qrDownloadError: "Could not find QR code to download",
+    deleteConfirmTitle: "Are you sure you want to delete this shorty?",
+    deleteConfirmIrreversible: "This cannot be undone. The link will be permanently removed.",
+    deleteConfirmYes: "Delete",
+    deleteConfirmNo: "Cancel",
+    profileDeleteFailedTitle: "Could not delete shorty"
   },
   ru: {
     brand: "шорти.рф",
@@ -215,6 +224,15 @@ export const translations = {
     logoutConfirmTitle: "Вы уверены, что хотите выйти?",
     logoutConfirmYes: "Да",
     logoutConfirmNo: "Нет",
-    profileResetFilters: "Сбросить фильтры"
+    profileResetFilters: "Сбросить фильтры",
+    profileCreateNewShorty: "Создать новый",
+    shortenSuccessTitle: "Готово!",
+    shortenSuccessDescription: "Ссылка успешно сокращена.",
+    qrDownloadError: "Не удалось найти QR-код для сохранения",
+    deleteConfirmTitle: "Вы точно хотите удалить этот шортис?",
+    deleteConfirmIrreversible: "Восстановление будет невозможно.",
+    deleteConfirmYes: "Удалить",
+    deleteConfirmNo: "Отмена",
+    profileDeleteFailedTitle: "Не удалось удалить шортис"
   }
 };
