@@ -1,9 +1,17 @@
 import { describe, it, expect } from "vitest";
-import { uiSortToApiSort, PROFILE_SHORTIES_PAGE_SIZE } from "../features/profile/model/myShortUrlsQuery";
+import {
+  uiSortToApiSort,
+  PROFILE_SHORTIES_PAGE_SIZE,
+  PROFILE_SEARCH_DEBOUNCE_MS,
+} from "../features/profile/model/myShortUrlsQuery";
 
 describe("myShortUrlsQuery", () => {
   it("exports page size matching backend default", () => {
     expect(PROFILE_SHORTIES_PAGE_SIZE).toBe(5);
+  });
+
+  it("exports search debounce for profile list", () => {
+    expect(PROFILE_SEARCH_DEBOUNCE_MS).toBe(500);
   });
 
   it("maps UI sort to API params", () => {

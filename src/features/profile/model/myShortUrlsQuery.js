@@ -1,6 +1,9 @@
 /** Matches backend default page_size (see PaginationParams). */
 export const PROFILE_SHORTIES_PAGE_SIZE = 5;
 
+/** Delay before search query triggers GET /me/short_urls (reduces server load). */
+export const PROFILE_SEARCH_DEBOUNCE_MS = 500;
+
 /**
  * Maps toolbar sort value to API query fields.
  * @param {string} uiSort newest | oldest | clicks_desc | clicks_asc
