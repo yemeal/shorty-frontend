@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Globe, LogIn, Settings, Sun, Moon, Rocket } from "lucide-react";
 import { useLang } from "../LangContext";
@@ -20,6 +20,22 @@ const Header = () => {
   const { theme, toggleTheme, triggerAntigravity } = useTheme();
   const { user, isAuthenticated } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsTriggerRef = useRef(null);
+  const settingsPanelRef = useRef(null);
+
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+    const onPointerDown = (event) => {
+      const node = event.target;
+      if (!(node instanceof Node)) return;
+      if (settingsTriggerRef.current?.contains(node) || settingsPanelRef.current?.contains(node)) {
+        return;
+      }
+      setIsSettingsOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => document.removeEventListener("pointerdown", onPointerDown, true);
+  }, [isSettingsOpen]);
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 sm:pt-6">
@@ -40,6 +56,8 @@ const Header = () => {
 
             <div className="flex items-center gap-2 sm:gap-4">
               <button
+                ref={settingsTriggerRef}
+                type="button"
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                 aria-label={t.settingsTitle}
                 aria-expanded={isSettingsOpen}
@@ -75,6 +93,7 @@ const Header = () => {
 
         {/* Settings panel — always in DOM, CSS grid-rows + width transition (droplet) */}
         <div
+          ref={settingsPanelRef}
           aria-hidden={!isSettingsOpen}
           className={`absolute top-full right-0 mt-3 mb-6 grid transition-[grid-template-rows,width] duration-[400ms] ${
             isSettingsOpen ? 'grid-rows-[1fr] w-64 sm:w-72' : 'grid-rows-[0fr] w-32 sm:w-36'
