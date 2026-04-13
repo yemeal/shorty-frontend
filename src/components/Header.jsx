@@ -7,7 +7,13 @@ import { useAuth, AUTH_DEFAULT_EMOJI } from "../AuthContext";
 import { GLASS_HOVER_INTERACTIVE_CLASS, MOTION_EASE_SMOOTH } from "../lib/motionTokens";
 
 const BUTTON_CLASS =
-  `flex items-center gap-3 cursor-pointer bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 p-3 rounded-xl active:scale-[0.97] shadow-[0_10px_25px_-10px_rgba(0,0,0,0.05)] dark:shadow-none group ${GLASS_HOVER_INTERACTIVE_CLASS}`;
+  `flex items-center gap-3 cursor-pointer font-display text-left bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 p-3 rounded-xl active:scale-[0.97] shadow-[0_10px_25px_-10px_rgba(0,0,0,0.05)] dark:shadow-none group ${GLASS_HOVER_INTERACTIVE_CLASS}`;
+
+/** Matches Sign in link: Montserrat + black weight on the primary line. */
+const SETTINGS_MENU_CAPTION =
+  "text-xs text-slate-500 dark:text-slate-400 font-semibold tracking-tight";
+const SETTINGS_MENU_VALUE =
+  "text-sm sm:text-base font-black text-slate-800 dark:text-slate-200 tracking-tight";
 
 const Header = () => {
   const { lang, toggleLang, t } = useLang();
@@ -76,17 +82,17 @@ const Header = () => {
           style={{ transitionTimingFunction: `cubic-bezier(${MOTION_EASE_SMOOTH.join(",")})` }}
         >
           <div className={`overflow-hidden min-h-0 ${!isSettingsOpen ? 'pointer-events-none' : ''}`}>
-            <div className="px-1 pb-6">
-              <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl overflow-hidden">
-                <div className="flex flex-col gap-2 p-3 sm:p-4">
+            <div className="px-2 pb-5 sm:pb-6 pt-0.5">
+              <div className="glass-panel glass-panel--menu rounded-3xl border-slate-200/20 dark:border-white/10 overflow-hidden relative">
+                <div className="flex flex-col gap-2 p-3 sm:p-4 relative z-10">
 
                   <button onClick={toggleLang} className={BUTTON_CLASS}>
                     <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg group-hover:scale-110 transition-transform">
                       <Globe size={18} className="text-blue-600 dark:text-blue-400" />
                     </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Язык / Lang</span>
-                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{lang.toUpperCase()}</span>
+                    <div className="flex flex-col items-start gap-0.5 min-w-0">
+                      <span className={SETTINGS_MENU_CAPTION}>Язык / Lang</span>
+                      <span className={SETTINGS_MENU_VALUE}>{lang.toUpperCase()}</span>
                     </div>
                   </button>
 
@@ -94,9 +100,9 @@ const Header = () => {
                     <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg group-hover:scale-110 transition-transform">
                       {theme === 'dark' ? <Sun size={18} className="text-indigo-600 dark:text-indigo-400" /> : <Moon size={18} className="text-indigo-600 dark:text-indigo-400" />}
                     </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t.themeToggle}</span>
-                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{theme === 'dark' ? t.themeLight : t.themeDark}</span>
+                    <div className="flex flex-col items-start gap-0.5 min-w-0">
+                      <span className={SETTINGS_MENU_CAPTION}>{t.themeToggle}</span>
+                      <span className={SETTINGS_MENU_VALUE}>{theme === 'dark' ? t.themeLight : t.themeDark}</span>
                     </div>
                   </button>
 
@@ -110,9 +116,9 @@ const Header = () => {
                     <div className="bg-slate-100 dark:bg-slate-700/30 p-2 rounded-lg group-hover:scale-110 transition-transform">
                       <Rocket size={18} className="text-slate-600 dark:text-slate-300" />
                     </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t.secret}</span>
-                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{t.doNotPress}</span>
+                    <div className="flex flex-col items-start gap-0.5 min-w-0">
+                      <span className={SETTINGS_MENU_CAPTION}>{t.secret}</span>
+                      <span className={SETTINGS_MENU_VALUE}>{t.doNotPress}</span>
                     </div>
                   </button>
 

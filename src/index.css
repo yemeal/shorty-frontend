@@ -94,7 +94,29 @@ html.dark body {
   }
 }
 
+/*
+ * Header settings menu sits under overflow:hidden (grid height animation).
+ * The default glass-panel shadow is large; clipping draws a dark rectangle.
+ * Use a tighter, layered shadow so it stays inside the clip and reads on dark UI.
+ */
+.glass-panel.glass-panel--menu {
+  box-shadow:
+    0 4px 6px -1px rgba(15, 23, 42, 0.07),
+    0 10px 22px -8px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
 
+/* Keep spread small: parent overflow:hidden still clips; dark UI needed a lighter stack than light */
+html.dark .glass-panel.glass-panel--menu {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 6px 14px -4px rgba(0, 0, 0, 0.42);
+}
+
+.glass-panel.glass-panel--menu::before {
+  border-radius: inherit;
+}
 
 .glass-input {
   background: rgba(0, 0, 0, 0.35);
