@@ -44,7 +44,7 @@ const HomePage = () => {
                         </>
                     }
                     subtitle={t.subtitle}
-                    className="text-center space-y-4 sm:space-y-6 mb-10 sm:mb-14 relative z-10 w-full transition-all duration-500"
+                    className="text-center space-y-4 sm:space-y-6 mb-10 sm:mb-14 relative z-10 w-full transition-colors duration-500"
                     titleClassName="font-display text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight"
                     subtitleClassName="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto leading-relaxed px-4 transition-colors"
                 />

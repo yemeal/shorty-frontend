@@ -238,14 +238,14 @@ describe("ProfilePage — shorties list", () => {
   it("shows page info in pagination bar", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     await waitFor(() => {
-      expect(screen.getByText(/1 \/ 2/)).toBeInTheDocument();
+      expect(screen.getByText(/Page 1 of 2|Страница 1 из 2/)).toBeInTheDocument();
     });
   });
 
   it("navigates to page 2", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     await expectArticleCount(5);
-    fireEvent.click(screen.getByText(/Next|Вперёд/i));
+    fireEvent.click(screen.getByRole("button", { name: /Next|Вперёд/i }));
     await expectArticleCount(3);
     await waitFor(() => {
       expect(screen.getByText(/6-8 (из|of) 8/)).toBeInTheDocument();
@@ -255,26 +255,26 @@ describe("ProfilePage — shorties list", () => {
   it("prev button disabled on page 1", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     await expectArticleCount(5);
-    const prevBtn = screen.getByText(/Prev|Назад/i);
+    const prevBtn = screen.getByRole("button", { name: /Prev|Назад/i });
     expect(prevBtn).toBeDisabled();
   });
 
   it("next button disabled on last page", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     await expectArticleCount(5);
-    fireEvent.click(screen.getByText(/Next|Вперёд/i));
+    fireEvent.click(screen.getByRole("button", { name: /Next|Вперёд/i }));
     await expectArticleCount(3);
     await waitFor(() => {
-      expect(screen.getByText(/Next|Вперёд/i)).toBeDisabled();
+      expect(screen.getByRole("button", { name: /Next|Вперёд/i })).toBeDisabled();
     });
   });
 
   it("prev returns to page 1", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     await expectArticleCount(5);
-    fireEvent.click(screen.getByText(/Next|Вперёд/i));
+    fireEvent.click(screen.getByRole("button", { name: /Next|Вперёд/i }));
     await expectArticleCount(3);
-    fireEvent.click(screen.getByText(/Prev|Назад/i));
+    fireEvent.click(screen.getByRole("button", { name: /Prev|Назад/i }));
     await expectArticleCount(5);
   });
 });
@@ -291,8 +291,8 @@ describe("ProfilePage — sort", () => {
   it("oldest-first sort works", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     await expectArticleCount(5);
-    const select = screen.getByDisplayValue(/Newest|Сначала новые/i);
-    fireEvent.change(select, { target: { value: "oldest" } });
+    fireEvent.click(screen.getByRole("button", { name: /Newest first|Сначала новые/i }));
+    fireEvent.click(screen.getByRole("option", { name: /Oldest first|Сначала старые/i }));
     await waitFor(() => {
       const articles = screen.getAllByRole("article");
       expect(articles[0].textContent).toContain("spacefox");
@@ -302,8 +302,8 @@ describe("ProfilePage — sort", () => {
   it("most-clicks sort works", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     await expectArticleCount(5);
-    const select = screen.getByDisplayValue(/Newest|Сначала новые/i);
-    fireEvent.change(select, { target: { value: "clicks_desc" } });
+    fireEvent.click(screen.getByRole("button", { name: /Newest first|Сначала новые/i }));
+    fireEvent.click(screen.getByRole("option", { name: /Most clicks|Больше кликов/i }));
     await waitFor(() => {
       const articles = screen.getAllByRole("article");
       expect(articles[0].textContent).toContain("ultra-read");
@@ -343,13 +343,13 @@ describe("ProfilePage — search", () => {
   it("resets page to 1 on search", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     await expectArticleCount(5);
-    fireEvent.click(screen.getByText(/Next|Вперёд/i));
+    fireEvent.click(screen.getByRole("button", { name: /Next|Вперёд/i }));
     await expectArticleCount(3);
     fireEvent.change(screen.getByPlaceholderText(/Search|Поиск/i), {
       target: { value: "spa" },
     });
     await waitFor(() => {
-      expect(screen.getByText(/1 \/ 1/)).toBeInTheDocument();
+      expect(screen.getByText(/Page 1 of 1|Страница 1 из 1/)).toBeInTheDocument();
     });
   });
 });
