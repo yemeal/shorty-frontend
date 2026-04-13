@@ -1,9 +1,9 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Header from "../components/Header";
 import { useLang } from "../LangContext";
 import AppBackground from "../shared/ui/AppBackground";
+import { GlassSecondaryLink } from "../shared/ui/GlassSecondaryAction";
 
 const NotFoundPage = () => {
   const { t } = useLang();
@@ -31,13 +31,10 @@ const NotFoundPage = () => {
           </p>
 
           <div className="mt-6 sm:mt-7 flex justify-center">
-            <Link
-              to="/"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-base font-display font-bold border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/35 transition"
-            >
+            <GlassSecondaryLink to="/">
               <ArrowLeft size={16} />
               {t.notFoundGoHome}
-            </Link>
+            </GlassSecondaryLink>
           </div>
         </div>
       </main>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { AUTH_DEFAULT_EMOJI, useAuth } from "../AuthContext";
 import { MOTION_EASE_SMOOTH } from "../lib/motionTokens";
 import PageHeaderReveal from "../components/PageHeaderReveal";
 import AppBackground from "../shared/ui/AppBackground";
+import { GlassSecondaryLink } from "../shared/ui/GlassSecondaryAction";
 import { EMAIL_RE, messageForAuthError } from "../features/auth/lib/authValidation";
 import AuthTabSwitch from "../features/auth/ui/AuthTabSwitch";
 
@@ -341,13 +342,13 @@ const AuthPage = ({ defaultTab = "login" }) => {
                   {t.back}
                 </button>
               ) : (
-                <Link
+                <GlassSecondaryLink
                   to="/"
-                  className="order-2 sm:order-1 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-base font-display font-bold border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/35 shadow-[0_10px_24px_rgba(15,23,42,0.2)] dark:shadow-none transition"
+                  className="order-2 sm:order-1 w-full sm:w-auto"
                 >
                   <ArrowLeft size={16} />
                   {t.goHome}
-                </Link>
+                </GlassSecondaryLink>
               )}
 
               <MotionButton
