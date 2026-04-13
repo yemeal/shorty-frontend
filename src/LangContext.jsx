@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { translations } from './shared/i18n/translations';
 
 const LangContext = createContext();
@@ -20,21 +27,20 @@ export const LangProvider = ({ children }) => {
     localStorage.setItem('shorty-lang', lang);
   }, [lang]);
 
-  /**
-   * Toggles between supported languages and persists choice.
-   */
-  const toggleLang = () => {
-    const next = lang === 'en' ? 'ru' : 'en';
-    setLang(next);
-  };
+  const toggleLang = useCallback(() => {
+    setLang((prev) => (prev === 'en' ? 'ru' : 'en'));
+  }, []);
 
-  const t = translations[lang];
-
-  return (
-    <LangContext.Provider value={{ lang, toggleLang, t }}>
-      {children}
-    </LangContext.Provider>
+  const value = useMemo(
+    () => ({
+      lang,
+      toggleLang,
+      t: translations[lang],
+    }),
+    [lang, toggleLang],
   );
+
+  return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
 };
 
 // eslint-disable-next-line react-refresh/only-export-components

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { QRCodeCanvas } from "qrcode.react";
 import { CheckCircle2, Copy, Download, ExternalLink, LogOut, PencilLine, QrCode, Trash2, UserCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -280,6 +280,7 @@ const ProfilePage = () => {
               }}
             />
 
+            {/* layout только на панели: один узел, без O(n) измерений по карточкам */}
             <MotionDiv
               layout
               transition={{ layout: { duration: 0.42, ease: MOTION_EASE_OUT_SMOOTH } }}
@@ -291,12 +292,7 @@ const ProfilePage = () => {
                 </span>
               </div>
 
-              <LayoutGroup>
-              <MotionDiv
-                layout
-                transition={{ layout: { duration: 0.42, ease: MOTION_EASE_OUT_SMOOTH } }}
-                className="space-y-3 relative z-10"
-              >
+              <div className="space-y-3 relative z-10">
                 {listError && !isLoadingShorties ? (
                   <div className="relative overflow-hidden rounded-2xl border border-solid border-slate-300/80 dark:border-dashed dark:border-white/10 bg-slate-100/90 dark:bg-white/5 shadow-sm dark:shadow-none py-10 text-center">
                     <ProfileListPanelCornerGlow />
@@ -354,9 +350,7 @@ const ProfilePage = () => {
                     return (
                       <MotionDiv
                         key={item.id}
-                        layout
                         transition={{
-                          layout: { duration: 0.42, ease: MOTION_EASE_OUT_SMOOTH },
                           default: { duration: 0.46, ease: MOTION_EASE_OUT_SMOOTH },
                         }}
                         className={`grid mx-auto origin-center transition-[grid-template-rows,max-width,opacity,transform] duration-[460ms] ease-[cubic-bezier(0.33,1,0.65,1)] ${
@@ -468,8 +462,7 @@ const ProfilePage = () => {
                     );
                   })
                 )}
-              </MotionDiv>
-              </LayoutGroup>
+              </div>
             </MotionDiv>
           </div>
 
