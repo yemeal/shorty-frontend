@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, memo } from 'react';
 import { Link2, Copy, CheckCircle2, Loader2, ArrowRight, ExternalLink, QrCode, Download, Trash2 } from 'lucide-react';
 import { useLang } from '../LangContext';
 import { useRecentLinks } from '../hooks/useRecentLinks';
-import { motion as Motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { toast } from 'sonner';
 import { QRCodeCanvas } from 'qrcode.react';
 import { ApiError, apiPostJson } from '../shared/lib/api';
@@ -126,7 +126,7 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => {
                                     const ok = downloadCanvasAsJpg(qrCanvasId, `shorty-qr-${idx}.jpg`, { quality: 0.96, scale: 4 });
-                                    if (!ok) toast.error("Ошибка: QR-Код не найден");
+                                    if (!ok) toast.error(t.qrDownloadError);
                                 }}
                                 className="flex items-center gap-2 cursor-pointer text-xs font-mono font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                             >
@@ -143,6 +143,22 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
 
 const ShortenForm = () => {
     const { t } = useLang();
+    const prefersReducedMotion = useReducedMotion();
+    const formShellVariants = prefersReducedMotion
+        ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
+        : {
+              hidden: { opacity: 0, y: 40, scale: 0.96 },
+              show: {
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  transition: {
+                      delay: 0.1,
+                      duration: MOTION_DURATION.reveal,
+                      ease: MOTION_EASE_SMOOTH,
+                  },
+              },
+          };
     const [longUrl, setLongUrl] = useState(() => {
         try {
             const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -261,7 +277,7 @@ const ShortenForm = () => {
             }
             const generatedUrl = buildPublicShortUrlDisplay(createdSlug);
             setShortUrl(generatedUrl);
-            toast.success("Готово!", { description: 'Ссылка успешно сокращена.' });
+            toast.success(t.shortenSuccessTitle, { description: t.shortenSuccessDescription });
             localStorage.removeItem(DRAFT_STORAGE_KEY);
 
             // Add to history
@@ -316,12 +332,10 @@ const ShortenForm = () => {
     return (
         <div className="w-full max-w-2xl relative z-10 mb-4 sm:mb-20 px-2 sm:px-0 mx-auto">
             <Motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                    duration: 0.5,
-                    layout: MOTION_TRANSITION.droplet
-                }}
+                variants={formShellVariants}
+                initial="hidden"
+                animate="show"
+                transition={{ layout: MOTION_TRANSITION.droplet }}
                 className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-8 pb-5 sm:pb-9 dark:pb-8 relative overflow-hidden transition-shadow duration-300"
             >
                 <Motion.form onSubmit={handleShorten} noValidate className="flex flex-col relative z-10">
@@ -514,7 +528,7 @@ const ShortenForm = () => {
                                                 whileTap={{ scale: 0.95 }}
                                                 onClick={() => {
                                                     const ok = downloadCanvasAsJpg("qr-code-canvas-main", "shorty-qr.jpg", { quality: 0.96, scale: 4 });
-                                                    if (!ok) toast.error("Ошибка: QR-Код не найден");
+                                                    if (!ok) toast.error(t.qrDownloadError);
                                                 }}
                                                 className="flex items-center gap-2 cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                                             >

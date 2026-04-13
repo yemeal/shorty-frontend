@@ -15,10 +15,11 @@ const PageHeaderReveal = ({
 }) => {
   const prefersReducedMotion = useReducedMotion();
 
+  /** Negative y = start above final position, animate down toward content below (e.g. home form). */
   const container = prefersReducedMotion
     ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
     : {
-        hidden: { opacity: 0, y: 10 },
+        hidden: { opacity: 0, y: -18 },
         show: {
           opacity: 1,
           y: 0,
@@ -29,7 +30,7 @@ const PageHeaderReveal = ({
   const titleVariants = prefersReducedMotion
     ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
     : {
-        hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
+        hidden: { opacity: 0, y: -22, filter: "blur(8px)" },
         show: {
           opacity: 1,
           y: 0,
@@ -44,7 +45,7 @@ const PageHeaderReveal = ({
   const subtitleVariants = prefersReducedMotion
     ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
     : {
-        hidden: { opacity: 0, y: 8 },
+        hidden: { opacity: 0, y: -14 },
         show: {
           opacity: 1,
           y: 0,
