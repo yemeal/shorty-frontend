@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { QRCodeCanvas } from "qrcode.react";
@@ -17,12 +17,19 @@ import ShortiesToolbar from "../features/profile/ui/ShortiesToolbar";
 import { fetchMyShortUrls } from "../features/profile/api/fetchMyShortUrls";
 import { deleteMyShortUrl } from "../features/profile/api/deleteMyShortUrl";
 import { ApiError } from "../shared/lib/api";
+import ProfileShortiesPagination from "../features/profile/ui/ProfileShortiesPagination";
 import {
-  PROFILE_SHORTIES_PAGE_SIZE,
+  PROFILE_PAGE_SIZE_DEBOUNCE_MS,
   PROFILE_SEARCH_DEBOUNCE_MS,
+  PROFILE_SHORTIES_PAGE_SIZE_DEFAULT,
+  parseProfilePageSizeParam,
   uiSortToApiSort,
 } from "../features/profile/model/myShortUrlsQuery";
-import { GLASS_HOVER_INTERACTIVE_CLASS, MOTION_TRANSITION } from "../lib/motionTokens";
+import {
+  GLASS_HOVER_INTERACTIVE_CLASS,
+  MOTION_EASE_OUT_SMOOTH,
+  MOTION_TRANSITION,
+} from "../lib/motionTokens";
 import { removeRecentLinkBySlug } from "../hooks/useRecentLinks";
 import { GlassSecondaryButton } from "../shared/ui/GlassSecondaryAction";
 import { ShortenStylePrimaryLink } from "../shared/ui/ShortenStylePrimaryLink";
@@ -44,6 +51,7 @@ const MotionDiv = motion.div;
 const MotionButton = motion.button;
 const IS_TEST_ENV = import.meta.env.MODE === "test";
 const SEARCH_DEBOUNCE_MS = IS_TEST_ENV ? 0 : PROFILE_SEARCH_DEBOUNCE_MS;
+const PAGE_SIZE_DEBOUNCE_MS = IS_TEST_ENV ? 0 : PROFILE_PAGE_SIZE_DEBOUNCE_MS;
 /** Wait for collapse animation before background refetch (grid transition ~460ms). */
 const DELETE_REFETCH_DELAY_MS = 480;
 
@@ -55,6 +63,11 @@ const ProfilePage = () => {
   const [debouncedQuery, setDebouncedQuery] = useState(() => (searchParams.get("q") || "").trim());
   const [sort, setSort] = useState(() => searchParams.get("sort") || "newest");
   const [page, setPage] = useState(() => Number(searchParams.get("page") || 1));
+  const [pageSize, setPageSize] = useState(() => parseProfilePageSizeParam(searchParams.get("page_size")));
+  const [debouncedPageSize, setDebouncedPageSize] = useState(() =>
+    parseProfilePageSizeParam(searchParams.get("page_size")),
+  );
+  const prevDebouncedPageSizeRef = useRef(undefined);
   const [shorties, setShorties] = useState([]);
   const [listMeta, setListMeta] = useState(null);
   const [listError, setListError] = useState(false);
@@ -73,8 +86,10 @@ const ProfilePage = () => {
     if (query.trim()) next.set("q", query.trim());
     if (sort !== "newest") next.set("sort", sort);
     if (safePage > 1) next.set("page", String(safePage));
+    if (debouncedPageSize !== PROFILE_SHORTIES_PAGE_SIZE_DEFAULT)
+      next.set("page_size", String(debouncedPageSize));
     setSearchParams(next, { replace: true });
-  }, [query, safePage, setSearchParams, sort]);
+  }, [query, safePage, debouncedPageSize, setSearchParams, sort]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(
@@ -83,6 +98,22 @@ const ProfilePage = () => {
     );
     return () => window.clearTimeout(timeoutId);
   }, [query]);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedPageSize(pageSize), PAGE_SIZE_DEBOUNCE_MS);
+    return () => window.clearTimeout(id);
+  }, [pageSize]);
+
+  useEffect(() => {
+    if (prevDebouncedPageSizeRef.current === undefined) {
+      prevDebouncedPageSizeRef.current = debouncedPageSize;
+      return;
+    }
+    if (prevDebouncedPageSizeRef.current !== debouncedPageSize) {
+      prevDebouncedPageSizeRef.current = debouncedPageSize;
+      setPage(1);
+    }
+  }, [debouncedPageSize]);
 
   const loadShorties = useCallback(
     async (opts = {}) => {
@@ -95,7 +126,7 @@ const ProfilePage = () => {
       try {
         const data = await fetchMyShortUrls({
           page: safePage,
-          pageSize: PROFILE_SHORTIES_PAGE_SIZE,
+          pageSize: debouncedPageSize,
           sortBy: sort_by,
           sortOrder: sort_order,
           q: debouncedQuery,
@@ -125,7 +156,7 @@ const ProfilePage = () => {
         }
       }
     },
-    [debouncedQuery, safePage, sort, t],
+    [debouncedQuery, debouncedPageSize, safePage, sort, t],
   );
 
   useEffect(() => {
@@ -237,9 +268,11 @@ const ProfilePage = () => {
               t={t}
               sort={sort}
               query={query}
-              onSortChange={(e) => {
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+              onSortChange={(nextSort) => {
                 setPage(1);
-                setSort(e.target.value);
+                setSort(nextSort);
               }}
               onQueryChange={(e) => {
                 setPage(1);
@@ -247,7 +280,11 @@ const ProfilePage = () => {
               }}
             />
 
-            <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-6 relative overflow-hidden transition-shadow duration-300">
+            <MotionDiv
+              layout
+              transition={{ layout: { duration: 0.42, ease: MOTION_EASE_OUT_SMOOTH } }}
+              className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-6 relative overflow-hidden transition-[box-shadow] duration-300"
+            >
               <div className="mb-3">
                 <span className="inline-flex items-center rounded-xl border border-white/55 dark:border-white/10 bg-white/35 dark:bg-black/20 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
                   {shownFrom}-{shownTo} {t.paginationOf} {totalForBadge}
@@ -255,7 +292,11 @@ const ProfilePage = () => {
               </div>
 
               <LayoutGroup>
-              <MotionDiv layout className="space-y-3 relative z-10">
+              <MotionDiv
+                layout
+                transition={{ layout: { duration: 0.42, ease: MOTION_EASE_OUT_SMOOTH } }}
+                className="space-y-3 relative z-10"
+              >
                 {listError && !isLoadingShorties ? (
                   <div className="relative overflow-hidden rounded-2xl border border-solid border-slate-300/80 dark:border-dashed dark:border-white/10 bg-slate-100/90 dark:bg-white/5 shadow-sm dark:shadow-none py-10 text-center">
                     <ProfileListPanelCornerGlow />
@@ -271,7 +312,7 @@ const ProfilePage = () => {
                     </div>
                   </div>
                 ) : isLoadingShorties ? (
-                  Array.from({ length: 3 }).map((_, idx) => (
+                  Array.from({ length: Math.min(debouncedPageSize, 12) }).map((_, idx) => (
                     <div
                       key={`skeleton-${idx}`}
                       className="rounded-2xl p-3 sm:p-4 bg-slate-100/90 dark:bg-white/5 border border-slate-200/90 dark:border-white/10 shadow-sm dark:shadow-none animate-pulse"
@@ -297,6 +338,7 @@ const ProfilePage = () => {
                             setQuery("");
                             setSort("newest");
                             setPage(1);
+                            setPageSize(PROFILE_SHORTIES_PAGE_SIZE_DEFAULT);
                           }}
                         >
                           {t.profileResetFilters}
@@ -313,8 +355,11 @@ const ProfilePage = () => {
                       <MotionDiv
                         key={item.id}
                         layout
-                        transition={MOTION_TRANSITION.normal}
-                        className={`grid mx-auto origin-center transition-[grid-template-rows,max-width,opacity,transform] duration-[460ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                        transition={{
+                          layout: { duration: 0.42, ease: MOTION_EASE_OUT_SMOOTH },
+                          default: { duration: 0.46, ease: MOTION_EASE_OUT_SMOOTH },
+                        }}
+                        className={`grid mx-auto origin-center transition-[grid-template-rows,max-width,opacity,transform] duration-[460ms] ease-[cubic-bezier(0.33,1,0.65,1)] ${
                           isDeleting
                             ? "overflow-hidden grid-rows-[0fr] max-w-[9rem] opacity-0 scale-95"
                             : "overflow-visible grid-rows-[1fr] max-w-full opacity-100 scale-100"
@@ -425,32 +470,24 @@ const ProfilePage = () => {
                 )}
               </MotionDiv>
               </LayoutGroup>
-            </div>
+            </MotionDiv>
           </div>
 
-          <div className="mt-5 flex justify-center relative z-10">
-            <div className="inline-flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                disabled={!listMeta?.has_previous_page}
-                className="cursor-pointer rounded-xl px-3 py-2 text-sm font-medium border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t.paginationPrev}
-              </button>
-              <span className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                {t.paginationPage} {listMeta ? currentPage : safePage} / {listMeta ? totalPages : "—"}
-              </span>
-              <button
-                type="button"
-                onClick={() => setPage((prev) => prev + 1)}
-                disabled={!listMeta?.has_next_page}
-                className="cursor-pointer rounded-xl px-3 py-2 text-sm font-medium border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t.paginationNext}
-              </button>
+          {!isLoadingShorties && listMeta && (
+            <div className="mt-5 flex flex-col items-center gap-3 relative z-10">
+              <ProfileShortiesPagination
+                t={t}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                hasPreviousPage={listMeta.has_previous_page}
+                hasNextPage={listMeta.has_next_page}
+                onPageChange={(p) => setPage(p)}
+              />
+              <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 tabular-nums">
+                {t.paginationPage} {currentPage} {t.paginationOf} {totalPages}
+              </p>
             </div>
-          </div>
+          )}
 
           <div className="mt-8 flex justify-center">
             <button
