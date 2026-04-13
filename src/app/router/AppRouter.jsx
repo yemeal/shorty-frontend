@@ -12,6 +12,7 @@ import NotFoundPage from "../../pages/NotFoundPage";
 import PlaceholderPage from "../../pages/PlaceholderPage";
 import ProfilePage from "../../pages/ProfilePage";
 import RequireAuth from "./RequireAuth";
+import ScrollToTop from "./ScrollToTop";
 
 /**
  * Central app routes and navigation redirects.
@@ -19,6 +20,7 @@ import RequireAuth from "./RequireAuth";
 const AppRouter = () => {
   return (
     <Router>
+      <ScrollToTop />
       <NetworkActivityIndicator />
       <Routes>
         <Route path="/" element={<HomePage />} />
