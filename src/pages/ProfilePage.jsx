@@ -15,8 +15,17 @@ import { buildPublicShortUrlAbsolute } from "../shared/lib/publicShortUrl";
 import ProfileHeroSection from "../features/profile/ui/ProfileHeroSection";
 import ShortiesToolbar from "../features/profile/ui/ShortiesToolbar";
 import { fetchMyShortUrls } from "../features/profile/api/fetchMyShortUrls";
-import { PROFILE_SHORTIES_PAGE_SIZE, uiSortToApiSort } from "../features/profile/model/myShortUrlsQuery";
+import { deleteMyShortUrl } from "../features/profile/api/deleteMyShortUrl";
+import { ApiError } from "../shared/lib/api";
+import {
+  PROFILE_SHORTIES_PAGE_SIZE,
+  PROFILE_SEARCH_DEBOUNCE_MS,
+  uiSortToApiSort,
+} from "../features/profile/model/myShortUrlsQuery";
 import { GLASS_HOVER_INTERACTIVE_CLASS, MOTION_TRANSITION } from "../lib/motionTokens";
+import { removeRecentLinkBySlug } from "../hooks/useRecentLinks";
+import { GlassSecondaryButton } from "../shared/ui/GlassSecondaryAction";
+import { ShortenStylePrimaryLink } from "../shared/ui/ShortenStylePrimaryLink";
 
 const BTN_GO =
   "flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]";
@@ -24,13 +33,9 @@ const BTN_GO =
 const MotionDiv = motion.div;
 const MotionButton = motion.button;
 const IS_TEST_ENV = import.meta.env.MODE === "test";
-const SEARCH_DEBOUNCE_MS = IS_TEST_ENV ? 0 : 320;
-
-function mockDeleteShortyRequest() {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, 320);
-  });
-}
+const SEARCH_DEBOUNCE_MS = IS_TEST_ENV ? 0 : PROFILE_SEARCH_DEBOUNCE_MS;
+/** Wait for collapse animation before background refetch (grid transition ~460ms). */
+const DELETE_REFETCH_DELAY_MS = 480;
 
 const ProfilePage = () => {
   const { user, logout } = useAuth();
@@ -47,6 +52,7 @@ const ProfilePage = () => {
   const [copiedId, setCopiedId] = useState(null);
   const [isLoadingShorties, setIsLoadingShorties] = useState(true);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [deletingIds, setDeletingIds] = useState(new Set());
 
   const profileEmoji = user?.emoji || AUTH_DEFAULT_EMOJI;
@@ -68,39 +74,49 @@ const ProfilePage = () => {
     return () => window.clearTimeout(timeoutId);
   }, [query]);
 
-  const loadShorties = useCallback(async () => {
-    setListError(false);
-    setIsLoadingShorties(true);
-    const { sort_by, sort_order } = uiSortToApiSort(sort);
-    try {
-      const data = await fetchMyShortUrls({
-        page: safePage,
-        pageSize: PROFILE_SHORTIES_PAGE_SIZE,
-        sortBy: sort_by,
-        sortOrder: sort_order,
-        q: debouncedQuery,
-      });
-
-      let nextPage = safePage;
-      if (data.meta.total_pages > 0 && safePage > data.meta.total_pages) {
-        nextPage = data.meta.total_pages;
-      } else if (data.meta.total_items > 0 && data.items.length === 0 && safePage > 1) {
-        nextPage = 1;
+  const loadShorties = useCallback(
+    async (opts = {}) => {
+      const background = Boolean(opts.background);
+      setListError(false);
+      if (!background) {
+        setIsLoadingShorties(true);
       }
-      if (nextPage !== safePage) {
-        setPage(nextPage);
-        return;
-      }
+      const { sort_by, sort_order } = uiSortToApiSort(sort);
+      try {
+        const data = await fetchMyShortUrls({
+          page: safePage,
+          pageSize: PROFILE_SHORTIES_PAGE_SIZE,
+          sortBy: sort_by,
+          sortOrder: sort_order,
+          q: debouncedQuery,
+        });
 
-      setShorties(data.items);
-      setListMeta(data.meta);
-    } catch {
-      setListError(true);
-      toast.error(t.errorGeneric);
-    } finally {
-      setIsLoadingShorties(false);
-    }
-  }, [debouncedQuery, safePage, sort, t]);
+        let nextPage = safePage;
+        if (data.meta.total_pages > 0 && safePage > data.meta.total_pages) {
+          nextPage = data.meta.total_pages;
+        } else if (data.meta.total_items > 0 && data.items.length === 0 && safePage > 1) {
+          nextPage = 1;
+        }
+        if (nextPage !== safePage) {
+          setPage(nextPage);
+          return;
+        }
+
+        setShorties(data.items);
+        setListMeta(data.meta);
+      } catch {
+        setListError(true);
+        if (!background) {
+          toast.error(t.errorGeneric);
+        }
+      } finally {
+        if (!background) {
+          setIsLoadingShorties(false);
+        }
+      }
+    },
+    [debouncedQuery, safePage, sort, t],
+  );
 
   useEffect(() => {
     loadShorties();
@@ -111,6 +127,7 @@ const ProfilePage = () => {
       if (event.key === "Escape") {
         setQrExpandedId(null);
         setIsLogoutConfirmOpen(false);
+        setPendingDeleteId(null);
         if (document.activeElement instanceof HTMLElement) {
           document.activeElement.blur();
         }
@@ -155,45 +172,34 @@ const ProfilePage = () => {
     }
   };
 
-  const removeShorty = async (itemId) => {
-    setDeletingIds((prev) => new Set(prev).add(itemId));
+  const confirmDeleteShorty = async () => {
+    const itemId = pendingDeleteId;
+    if (!itemId) return;
+    const row = shorties.find((s) => s.id === itemId);
+    const deletedSlug = row?.slug;
+    setPendingDeleteId(null);
 
     try {
-      await Promise.all([
-        mockDeleteShortyRequest(),
-        new Promise((resolve) => window.setTimeout(resolve, 420)),
-      ]);
-      const nextItems = shorties.filter((item) => item.id !== itemId);
-      const shouldGoPrev =
-        nextItems.length === 0 && listMeta && listMeta.page > 1 && listMeta.total_items > 1;
-
-      setShorties(nextItems);
-      setListMeta((prev) => {
-        if (!prev) return prev;
-        const totalItems = Math.max(0, prev.total_items - 1);
-        const pageSize = prev.page_size;
-        const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / pageSize);
-        const currentPage = prev.page;
-        return {
-          ...prev,
-          total_items: totalItems,
-          total_pages: totalPages,
-          has_next_page: currentPage * pageSize < totalItems,
-          has_previous_page: currentPage > 1,
-        };
-      });
-      if (shouldGoPrev) {
-        setPage((p) => Math.max(1, p - 1));
-      }
+      await deleteMyShortUrl(itemId);
+      if (deletedSlug) removeRecentLinkBySlug(deletedSlug);
+      setDeletingIds((prev) => new Set(prev).add(itemId));
       toast.success(t.profileDeleteSuccess);
-    } catch {
-      toast.error(t.errorGeneric);
-    } finally {
-      setDeletingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(itemId);
-        return next;
-      });
+      window.setTimeout(async () => {
+        try {
+          await loadShorties({ background: true });
+        } finally {
+          setDeletingIds((prev) => {
+            const next = new Set(prev);
+            next.delete(itemId);
+            return next;
+          });
+        }
+      }, DELETE_REFETCH_DELAY_MS);
+    } catch (err) {
+      const description =
+        err instanceof ApiError ? err.message || t.errorGeneric : err?.message || t.errorGeneric;
+      toast.error(t.profileDeleteFailedTitle, { description });
+      await loadShorties({ background: true });
     }
   };
 
@@ -255,28 +261,31 @@ const ProfilePage = () => {
                   Array.from({ length: 3 }).map((_, idx) => (
                     <div
                       key={`skeleton-${idx}`}
-                      className="rounded-2xl p-3 sm:p-4 bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 animate-pulse"
+                      className="rounded-2xl p-3 sm:p-4 bg-slate-100/90 dark:bg-white/5 border border-slate-200/90 dark:border-white/10 shadow-sm dark:shadow-none animate-pulse"
                     >
-                      <div className="h-4 w-40 bg-white/40 dark:bg-white/10 rounded mb-2" />
-                      <div className="h-3 w-full bg-white/35 dark:bg-white/10 rounded mb-2" />
-                      <div className="h-3 w-28 bg-white/30 dark:bg-white/10 rounded" />
+                      <div className="h-4 w-40 bg-slate-300/90 dark:bg-white/10 rounded mb-2" />
+                      <div className="h-3 w-full bg-slate-200/95 dark:bg-white/10 rounded mb-2" />
+                      <div className="h-3 w-28 bg-slate-200/90 dark:bg-white/10 rounded" />
                     </div>
                   ))
                 ) : shorties.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-white/20 dark:border-white/10 bg-white/10 dark:bg-white/5 py-10 text-center">
                     <UserCircle2 size={24} className="mx-auto text-slate-400 mb-2" />
                     <p className="text-slate-500 dark:text-slate-400">{t.shortiesEmpty}</p>
-                    <div className="mt-4 flex justify-center gap-2">
-                      <button
+                    <div className="mt-5 flex flex-col items-center gap-3">
+                      <ShortenStylePrimaryLink to="/" className="justify-center" size="prominent">
+                        {t.profileCreateNewShorty}
+                      </ShortenStylePrimaryLink>
+                      <GlassSecondaryButton
+                        variant="compact"
                         onClick={() => {
                           setQuery("");
                           setSort("newest");
                           setPage(1);
                         }}
-                        className="cursor-pointer rounded-xl px-3 py-2 text-sm font-medium border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20"
                       >
                         {t.profileResetFilters}
-                      </button>
+                      </GlassSecondaryButton>
                     </div>
                   </div>
                 ) : (
@@ -348,7 +357,7 @@ const ProfilePage = () => {
                               },
                               {
                                 key: "delete",
-                                onClick: () => removeShorty(item.id),
+                                onClick: () => setPendingDeleteId(item.id),
                                 variant: "dangerHover",
                                 ariaLabel: "Delete shorty",
                                 whileTap: { scale: 0.9 },
@@ -472,6 +481,50 @@ const ProfilePage = () => {
                   className="cursor-pointer rounded-2xl px-4 py-2.5 text-sm font-semibold bg-red-500/90 hover:bg-red-500 text-white transition"
                 >
                   {t.logoutConfirmYes}
+                </button>
+              </div>
+            </MotionDiv>
+          </MotionDiv>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {pendingDeleteId && (
+          <MotionDiv
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[71] bg-black/45 backdrop-blur-sm flex items-center justify-center px-4"
+          >
+            <MotionDiv
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              className="w-full max-w-md rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-[30px] border border-white/50 dark:border-white/10 shadow-2xl p-6 text-center"
+            >
+              <p className="font-display text-xl font-black text-slate-900 dark:text-white">
+                {t.deleteConfirmTitle}
+              </p>
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                {t.deleteConfirmIrreversible}
+              </p>
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  data-testid="shorty-delete-cancel"
+                  onClick={() => setPendingDeleteId(null)}
+                  className="cursor-pointer rounded-2xl px-4 py-2.5 text-sm font-semibold border border-white/50 dark:border-white/10 bg-white/40 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/35 transition"
+                >
+                  {t.deleteConfirmNo}
+                </button>
+                <button
+                  type="button"
+                  data-testid="shorty-delete-confirm"
+                  onClick={() => void confirmDeleteShorty()}
+                  className="cursor-pointer rounded-2xl px-4 py-2.5 text-sm font-semibold bg-red-500/90 hover:bg-red-500 text-white transition"
+                >
+                  {t.deleteConfirmYes}
                 </button>
               </div>
             </MotionDiv>
