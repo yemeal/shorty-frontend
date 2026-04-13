@@ -1,22 +1,49 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const STORAGE_KEY = 'shorty-recent-links';
+export const RECENT_LINKS_STORAGE_KEY = 'shorty-recent-links';
+const STORAGE_KEY = RECENT_LINKS_STORAGE_KEY;
 const MAX_HISTORY_LEN = 5;
+
+/** Same-tab sync when storage is updated outside the hook (e.g. profile delete). */
+export const RECENT_LINKS_CHANGED_EVENT = 'shorty-recent-links-changed';
+
+function readRecentLinksFromStorage() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return [];
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+}
+
+/**
+ * Removes entries whose stored short URL path ends with this slug (host may differ).
+ * @param {string} slug
+ */
+export function removeRecentLinkBySlug(slug) {
+    if (!slug || typeof slug !== 'string') return;
+    try {
+        const parsed = readRecentLinksFromStorage();
+        if (parsed.length === 0) return;
+        const next = parsed.filter((entry) => {
+            const su = entry?.shortUrl;
+            if (typeof su !== 'string') return true;
+            const lastSeg = su.includes('/') ? su.slice(su.lastIndexOf('/') + 1) : su;
+            return lastSeg !== slug;
+        });
+        if (next.length === parsed.length) return;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        window.dispatchEvent(new CustomEvent(RECENT_LINKS_CHANGED_EVENT));
+    } catch {
+        // ignore
+    }
+}
 
 export function useRecentLinks() {
     // Безопасная инициализация
-    const [recentLinks, setRecentLinks] = useState(() => {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (Array.isArray(parsed)) return parsed;
-            }
-        } catch {
-            // Если localStorage сломан (например квота или битый JSON) — игнорим
-        }
-        return [];
-    });
+    const [recentLinks, setRecentLinks] = useState(() => readRecentLinksFromStorage());
 
     // Синхронизация между вкладками браузера
     useEffect(() => {
@@ -36,6 +63,12 @@ export function useRecentLinks() {
         };
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
+    useEffect(() => {
+        const onSameTabSync = () => setRecentLinks(readRecentLinksFromStorage());
+        window.addEventListener(RECENT_LINKS_CHANGED_EVENT, onSameTabSync);
+        return () => window.removeEventListener(RECENT_LINKS_CHANGED_EVENT, onSameTabSync);
     }, []);
 
     // Сохранение при каждом изменении локального стейта
