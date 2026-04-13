@@ -4,6 +4,9 @@
  */
 export const MOTION_EASE_SMOOTH = [0.23, 1, 0.32, 1];
 
+/** Smooth ease-out without overshoot — layout, height, and text reveals. */
+export const MOTION_EASE_OUT_SMOOTH = [0.33, 1, 0.65, 1];
+
 export const MOTION_DURATION = {
   fast: 0.2,
   normal: 0.35,
