@@ -1,14 +1,19 @@
-import React, { useEffect, useRef, useState, memo } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, memo } from 'react';
 import { Link2, Copy, CheckCircle2, Loader2, ArrowRight, ExternalLink, QrCode, Download, Trash2 } from 'lucide-react';
 import { useLang } from '../LangContext';
 import { useRecentLinks } from '../hooks/useRecentLinks';
-import { motion as Motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion as Motion, AnimatePresence, LayoutGroup, useReducedMotion } from 'framer-motion';
 import { toast } from 'sonner';
 import { QRCodeCanvas } from 'qrcode.react';
 import { ApiError, apiPostJson } from '../shared/lib/api';
 import { downloadCanvasAsJpg } from '../lib/downloadImage';
 import CardActions from './CardActions';
-import { GLASS_HOVER_INTERACTIVE_CLASS, MOTION_DURATION, MOTION_EASE_SMOOTH, MOTION_TRANSITION } from '../lib/motionTokens';
+import {
+    GLASS_HOVER_INTERACTIVE_CLASS,
+    MOTION_DURATION,
+    MOTION_EASE_OUT_SMOOTH,
+    MOTION_EASE_SMOOTH,
+} from '../lib/motionTokens';
 import { copyTextToClipboard } from '../shared/lib/clipboard';
 import { buildPublicShortUrlDisplay } from '../shared/lib/publicShortUrl';
 import { validateSlug } from '../features/shorten/model/slug';
@@ -40,13 +45,12 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
     return (
         <Motion.div
             layout
-            initial={{ opacity: 0, y: 8, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{
-                layout: { duration: MOTION_DURATION.normal, ease: MOTION_EASE_SMOOTH },
-                opacity: { duration: MOTION_DURATION.fast, delay: idx * 0.055 },
-                y: { duration: MOTION_DURATION.normal, delay: idx * 0.055, ease: MOTION_EASE_SMOOTH },
-                scale: { duration: MOTION_DURATION.fast, delay: idx * 0.055 }
+                layout: { duration: 0.38, ease: MOTION_EASE_OUT_SMOOTH },
+                opacity: { duration: 0.34, delay: idx * 0.032, ease: MOTION_EASE_OUT_SMOOTH },
+                y: { duration: 0.38, delay: idx * 0.032, ease: MOTION_EASE_OUT_SMOOTH },
             }}
             className={`group bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col hover:bg-white/25 dark:hover:bg-white/10 shadow-md ${GLASS_HOVER_INTERACTIVE_CLASS}`}
         >
@@ -102,7 +106,7 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={MOTION_TRANSITION.droplet}
+                        transition={{ duration: 0.4, ease: MOTION_EASE_OUT_SMOOTH }}
                         className="overflow-hidden flex flex-col items-center gap-3"
                     >
                         <div className="w-full border-t border-slate-200/50 dark:border-white/10 mt-3 pt-3 flex flex-col items-center gap-3">
@@ -141,6 +145,44 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
     );
 });
 
+/**
+ * «Капля» только при первом появлении блока успеха; при смене ссылки (skipEntrance) оболочка остаётся раскрытой.
+ */
+const SuccessResultDropletShell = ({ prefersReducedMotion, skipEntrance, children }) => {
+    const [open, setOpen] = useState(() => Boolean(skipEntrance || prefersReducedMotion));
+
+    useLayoutEffect(() => {
+        if (skipEntrance || prefersReducedMotion) {
+            setOpen(true);
+            return undefined;
+        }
+        setOpen(false);
+        let innerId;
+        const outerId = requestAnimationFrame(() => {
+            innerId = requestAnimationFrame(() => setOpen(true));
+        });
+        return () => {
+            cancelAnimationFrame(outerId);
+            if (innerId != null) cancelAnimationFrame(innerId);
+        };
+    }, [prefersReducedMotion, skipEntrance]);
+
+    return (
+        <div
+            className={`grid w-full mx-auto transition-[grid-template-rows,max-width] duration-[400ms] ${
+                open ? "grid-rows-[1fr] max-w-full" : "grid-rows-[0fr] max-w-[6rem] sm:max-w-[7.5rem]"
+            }`}
+            style={{
+                transitionTimingFunction: `cubic-bezier(${MOTION_EASE_SMOOTH.join(",")})`,
+            }}
+        >
+            <div className="min-h-0 overflow-hidden px-1.5 pt-1 pb-2 sm:px-2 sm:pb-3">
+                {children}
+            </div>
+        </div>
+    );
+};
+
 const ShortenForm = () => {
     const { t } = useLang();
     const prefersReducedMotion = useReducedMotion();
@@ -155,7 +197,7 @@ const ShortenForm = () => {
                   transition: {
                       delay: 0.1,
                       duration: MOTION_DURATION.reveal,
-                      ease: MOTION_EASE_SMOOTH,
+                      ease: MOTION_EASE_OUT_SMOOTH,
                   },
               },
           };
@@ -176,6 +218,8 @@ const ShortenForm = () => {
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
     const [expandedRecentQrId, setExpandedRecentQrId] = useState(null);
     const [errorField, setErrorField] = useState(null); // 'long_url' | 'slug' | null
+    /** first = капля; replace = та же панель, смена ссылки через flip */
+    const [successRevealMode, setSuccessRevealMode] = useState("first");
 
     // Custom Slug State
     const [isCustomSlug, setIsCustomSlug] = useState(() => {
@@ -201,6 +245,10 @@ const ShortenForm = () => {
 
     // History Hook
     const { recentLinks, addLink, clearHistory } = useRecentLinks();
+
+    const formLayoutTransition = prefersReducedMotion
+        ? { layout: { duration: 0 } }
+        : { layout: { duration: 0.42, ease: MOTION_EASE_OUT_SMOOTH } };
 
     useEffect(() => {
         try {
@@ -266,7 +314,6 @@ const ShortenForm = () => {
         }
 
         setIsLoading(true);
-        setShortUrl('');
         setShowQR(false);
 
         try {
@@ -276,6 +323,7 @@ const ShortenForm = () => {
                 throw new Error(t.errorGeneric);
             }
             const generatedUrl = buildPublicShortUrlDisplay(createdSlug);
+            setSuccessRevealMode(shortUrl ? "replace" : "first");
             setShortUrl(generatedUrl);
             toast.success(t.shortenSuccessTitle, { description: t.shortenSuccessDescription });
             localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -332,13 +380,21 @@ const ShortenForm = () => {
     return (
         <div className="w-full max-w-2xl relative z-10 mb-4 sm:mb-20 px-2 sm:px-0 mx-auto">
             <Motion.div
+                layout
                 variants={formShellVariants}
                 initial="hidden"
                 animate="show"
-                transition={{ layout: MOTION_TRANSITION.droplet }}
-                className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-8 pb-5 sm:pb-9 dark:pb-8 relative overflow-hidden transition-shadow duration-300"
+                transition={formLayoutTransition}
+                className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-8 pb-3 sm:pb-5 dark:pb-4 relative overflow-visible transition-[box-shadow] duration-300"
             >
-                <Motion.form onSubmit={handleShorten} noValidate className="flex flex-col relative z-10">
+                <LayoutGroup id="shorten-form">
+                <Motion.form
+                    layout
+                    onSubmit={handleShorten}
+                    noValidate
+                    transition={formLayoutTransition}
+                    className="flex flex-col relative z-10"
+                >
 
                     <div className={`flex flex-col sm:flex-row items-center gap-3 sm:gap-2 bg-white/20 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border transition-all shadow-[inset_0_2px_12px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_10px_0_rgba(255,255,255,0.05)] mb-8 ${
                         errorField === 'long_url' 
@@ -411,24 +467,28 @@ const ShortenForm = () => {
                         </Motion.button>
                     </div>
 
-                    {/* Custom Slug Input */}
+                    {/* Custom Slug Input — только grid-rows (без opacity), иначе мерцание фона; без transition-all на строке */}
                     <div
-                        className={`grid transition-[grid-template-rows,opacity] duration-[420ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${isCustomSlug ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+                        className={`grid transition-[grid-template-rows] duration-[420ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                            isCustomSlug ? "grid-rows-[1fr]" : "grid-rows-[0fr] pointer-events-none"
+                        }`}
                         aria-hidden={!isCustomSlug}
                     >
-                        <div className="overflow-hidden transform-gpu min-h-0">
+                        <div className="overflow-hidden transform-gpu min-h-0" inert={!isCustomSlug}>
                             <div className="pt-2 pb-6">
-                                <div className={`flex items-center gap-3 bg-white/15 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border transition-all shadow-inner ${
-                                    errorField === 'slug'
-                                    ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] bg-red-500/5'
-                                    : 'border-white/20 dark:border-white/5 border-t-white/30'
-                                }`}>
+                                <div
+                                    className={`flex items-center gap-3 bg-white/15 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border shadow-inner transition-[border-color,box-shadow,background-color] duration-200 ${
+                                        errorField === 'slug'
+                                            ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] bg-red-500/5'
+                                            : 'border-white/20 dark:border-white/5 border-t-white/30'
+                                    }`}
+                                >
                                     <span className="text-slate-400 dark:text-slate-500 pl-4 font-mono select-none">шорти.рф/</span>
                                     <input
                                         ref={customSlugInputRef}
                                         type="text"
                                         maxLength="30"
-                                        hidden={!isCustomSlug}
+                                        tabIndex={isCustomSlug ? 0 : -1}
                                         aria-label={t.customSlugLabel}
                                         placeholder={t.customSlugPlaceholder}
                                         className={SHORTEN_INPUT_CLASS}
@@ -444,113 +504,128 @@ const ShortenForm = () => {
                     </div>
                 </Motion.form>
 
-                {/* Результат */}
-                <AnimatePresence>
-                    {shortUrl && (
-                        <Motion.div 
-                            initial={{ y: 30, opacity: 0, scale: 0.95 }}
-                            animate={{ y: 0, opacity: 1, scale: 1 }}
-                            className={`mt-4 sm:mt-10 p-4 sm:p-8 bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative overflow-hidden ${GLASS_HOVER_INTERACTIVE_CLASS}`}
+                {/* Результат: капля при первом появлении; смена ссылки — тот же блок, key обновляет контент без анимации переворота. */}
+                {shortUrl ? (
+                    <Motion.div
+                        layout={false}
+                        key="shorten-success-anchor"
+                        className="mt-4 sm:mt-6 w-full mx-auto"
+                    >
+                        <SuccessResultDropletShell
+                            prefersReducedMotion={prefersReducedMotion}
+                            skipEntrance={successRevealMode === "replace"}
                         >
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 opacity-50" />
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-8">
-                                <div className="flex flex-col w-full overflow-hidden">
-                                    <span className="text-xs font-mono tracking-[0.01em] text-slate-500 dark:text-slate-400 font-medium mb-1">{t.success}</span>
-                                    <span className="text-blue-600 dark:text-blue-300 font-mono text-xl truncate selection:bg-blue-200 dark:selection:bg-blue-400/20">
-                                        {shortUrl}
-                                    </span>
-                                </div>
-                                <CardActions
-                                    actions={[
-                                        {
-                                            key: "qr",
-                                            whileTap: { scale: 0.92 },
-                                            onClick: () => setShowQR(!showQR),
-                                            ariaLabel: t.downloadQRBtn,
-                                            variant: showQR ? "active" : "default",
-                                            icon: <QrCode size={18} />
-                                        },
-                                        {
-                                            key: "copy",
-                                            whileTap: { scale: 0.95 },
-                                            onClick: () => copyToClipboard(),
-                                            ariaLabel: t.copyBtn,
-                                            title: t.copyBtn,
-                                            variant: isCopied ? "success" : "default",
-                                            icon: isCopied ? <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={18} />
-                                        },
-                                        {
-                                            key: "open",
-                                            type: "link",
-                                            whileTap: { scale: 0.92 },
-                                            href: `${window.location.protocol}//${shortUrl}`,
-                                            target: "_blank",
-                                            rel: "noreferrer",
-                                            ariaLabel: "Open short link",
-                                            className: BTN_GO,
-                                            icon: <ExternalLink size={18} />
-                                        }
-                                    ]}
-                                    centered
-                                />
-                            </div>
-
-                            {/* QR Code Expansion */}
-                            <AnimatePresence>
-                                {showQR && (
-                                    <Motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: 'auto', opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        transition={MOTION_TRANSITION.droplet}
-                                        className="overflow-hidden flex flex-col items-center gap-4"
-                                    >
-                                        <div className="w-full border-t border-slate-200 dark:border-white/10 mt-5 pt-5 flex flex-col items-center gap-4">
-                                            <div className="p-3 bg-white rounded-xl shadow-sm">
-                                                <QRCodeCanvas
-                                                    id="qr-code-canvas-main"
-                                                    value={`${window.location.protocol}//${shortUrl}`}
-                                                    size={160}
-                                                    bgColor={"#ffffff"}
-                                                    fgColor={"#0f172a"}
-                                                    level={"Q"}
-                                                    imageSettings={{
-                                                        src: "/icon.svg",
-                                                        x: undefined,
-                                                        y: undefined,
-                                                        height: 38,
-                                                        width: 38,
-                                                        excavate: true,
-                                                    }}
-                                                />
-                                            </div>
-                                            <Motion.button
-                                                whileTap={{ scale: 0.95 }}
-                                                onClick={() => {
-                                                    const ok = downloadCanvasAsJpg("qr-code-canvas-main", "shorty-qr.jpg", { quality: 0.96, scale: 4 });
-                                                    if (!ok) toast.error(t.qrDownloadError);
-                                                }}
-                                                className="flex items-center gap-2 cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                                            >
-                                                <Download size={16} />
-                                                {t.downloadQRBtn}
-                                            </Motion.button>
+                            <div className="relative w-full min-h-0">
+                                <div
+                                    key={shortUrl}
+                                    className={`p-4 sm:p-8 bg-white/20 dark:bg-black/25 backdrop-blur-[30px] border border-white/40 dark:border-white/10 border-t-white/50 dark:border-t-white/5 rounded-3xl shadow-md dark:shadow-lg relative w-full overflow-hidden transform-gpu ring-1 ring-black/[0.04] dark:ring-white/[0.06] ${GLASS_HOVER_INTERACTIVE_CLASS}`}
+                                >
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 opacity-50" />
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-8">
+                                        <div className="flex flex-col w-full overflow-hidden">
+                                            <span className="text-xs font-mono tracking-[0.01em] text-slate-500 dark:text-slate-400 font-medium mb-1">{t.success}</span>
+                                            <span className="text-blue-600 dark:text-blue-300 font-mono text-xl truncate selection:bg-blue-200 dark:selection:bg-blue-400/20">
+                                                {shortUrl}
+                                            </span>
                                         </div>
-                                    </Motion.div>
-                                )}
-                            </AnimatePresence>
-                        </Motion.div>
+                                        <CardActions
+                                            actions={[
+                                                {
+                                                    key: "qr",
+                                                    whileTap: { scale: 0.92 },
+                                                    onClick: () => setShowQR(!showQR),
+                                                    ariaLabel: t.downloadQRBtn,
+                                                    variant: showQR ? "active" : "default",
+                                                    icon: <QrCode size={18} />
+                                                },
+                                                {
+                                                    key: "copy",
+                                                    whileTap: { scale: 0.95 },
+                                                    onClick: () => copyToClipboard(),
+                                                    ariaLabel: t.copyBtn,
+                                                    title: t.copyBtn,
+                                                    variant: isCopied ? "success" : "default",
+                                                    icon: isCopied ? <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={18} />
+                                                },
+                                                {
+                                                    key: "open",
+                                                    type: "link",
+                                                    whileTap: { scale: 0.92 },
+                                                    href: `${window.location.protocol}//${shortUrl}`,
+                                                    target: "_blank",
+                                                    rel: "noreferrer",
+                                                    ariaLabel: "Open short link",
+                                                    className: BTN_GO,
+                                                    icon: <ExternalLink size={18} />
+                                                }
+                                            ]}
+                                            centered
+                                        />
+                                    </div>
 
-                    )}
-                </AnimatePresence>
+                                    <AnimatePresence>
+                                        {showQR && (
+                                            <Motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: "auto", opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.4, ease: MOTION_EASE_OUT_SMOOTH }}
+                                                className="overflow-hidden flex flex-col items-center gap-4"
+                                            >
+                                                <div className="w-full border-t border-slate-200/80 dark:border-white/10 mt-5 pt-5 flex flex-col items-center gap-4">
+                                                    <div className="p-3 bg-white rounded-xl shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+                                                        <QRCodeCanvas
+                                                            id="qr-code-canvas-main"
+                                                            value={`${window.location.protocol}//${shortUrl}`}
+                                                            size={160}
+                                                            bgColor={"#ffffff"}
+                                                            fgColor={"#0f172a"}
+                                                            level={"Q"}
+                                                            imageSettings={{
+                                                                src: "/icon.svg",
+                                                                x: undefined,
+                                                                y: undefined,
+                                                                height: 38,
+                                                                width: 38,
+                                                                excavate: true,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <Motion.button
+                                                        whileTap={{ scale: 0.95 }}
+                                                        onClick={() => {
+                                                            const ok = downloadCanvasAsJpg("qr-code-canvas-main", "shorty-qr.jpg", { quality: 0.96, scale: 4 });
+                                                            if (!ok) toast.error(t.qrDownloadError);
+                                                        }}
+                                                        className="flex items-center gap-2 cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                                                    >
+                                                        <Download size={16} />
+                                                        {t.downloadQRBtn}
+                                                    </Motion.button>
+                                                </div>
+                                            </Motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                        </SuccessResultDropletShell>
+                    </Motion.div>
+                ) : null}
+                </LayoutGroup>
             </Motion.div>
 
             {/* Локальная История (Recent Links) */}
             <AnimatePresence>
                 {recentLinks.length > 0 && (
                     <Motion.div
-                        initial={{ opacity: 0, y: 10 }}
+                        layout
+                        initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                            duration: 0.44,
+                            ease: MOTION_EASE_OUT_SMOOTH,
+                            layout: { duration: 0.4, ease: MOTION_EASE_OUT_SMOOTH },
+                        }}
                         className="mt-8 mx-auto w-full"
                     >
                         <div className="flex flex-col items-center">
@@ -574,7 +649,7 @@ const ShortenForm = () => {
                                         window.setTimeout(() => setIsHistoryLoading(false), 320);
                                     }
                                 }}
-                                className="cursor-pointer flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-[30px] border border-white/20 dark:border-white/10 border-t-white/30 dark:border-t-white/10 text-slate-500 dark:text-slate-300 transition-all text-sm font-semibold shadow-lg overflow-hidden relative group perspective-1000"
+                                className="cursor-pointer flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-[30px] border border-white/20 dark:border-white/10 border-t-white/30 dark:border-t-white/10 text-slate-500 dark:text-slate-300 transition-[color,background-color,border-color,box-shadow] duration-200 text-sm font-semibold shadow-lg overflow-hidden relative group perspective-1000"
                             >
                                 <Motion.div
                                     animate={{ rotate: showHistory ? 180 : 0, scale: showHistory ? 1.1 : 1 }}
@@ -597,7 +672,10 @@ const ShortenForm = () => {
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: "auto", opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
-                                        transition={MOTION_TRANSITION.droplet}
+                                        transition={{
+                                            duration: 0.42,
+                                            ease: MOTION_EASE_OUT_SMOOTH,
+                                        }}
                                         className="overflow-hidden w-full"
                                     >
                                         <div className="px-1 sm:px-6 pt-4 pb-3">
