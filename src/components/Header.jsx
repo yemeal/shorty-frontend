@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Globe, LogIn, Settings, Sun, Moon, Rocket } from "lucide-react";
 import { useLang } from "../LangContext";
 import { useTheme } from "../ThemeContext";
 import { useAuth, AUTH_DEFAULT_EMOJI } from "../AuthContext";
 import { GLASS_HOVER_INTERACTIVE_CLASS, MOTION_EASE_SMOOTH } from "../lib/motionTokens";
+import { useDismissOnOutsidePress } from "../hooks/useDismissOnOutsidePress";
 
 const BUTTON_CLASS =
   `flex items-center gap-3 cursor-pointer font-display text-left bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 p-3 rounded-xl active:scale-[0.97] shadow-[0_10px_25px_-10px_rgba(0,0,0,0.05)] dark:shadow-none group ${GLASS_HOVER_INTERACTIVE_CLASS}`;
@@ -23,19 +24,13 @@ const Header = () => {
   const settingsTriggerRef = useRef(null);
   const settingsPanelRef = useRef(null);
 
-  useEffect(() => {
-    if (!isSettingsOpen) return;
-    const onPointerDown = (event) => {
-      const node = event.target;
-      if (!(node instanceof Node)) return;
-      if (settingsTriggerRef.current?.contains(node) || settingsPanelRef.current?.contains(node)) {
-        return;
-      }
-      setIsSettingsOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown, true);
-    return () => document.removeEventListener("pointerdown", onPointerDown, true);
-  }, [isSettingsOpen]);
+  const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
+
+  useDismissOnOutsidePress({
+    active: isSettingsOpen,
+    rootRefs: [settingsTriggerRef, settingsPanelRef],
+    onDismiss: closeSettings,
+  });
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 sm:pt-6">

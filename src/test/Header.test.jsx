@@ -30,6 +30,15 @@ describe("Header", () => {
     expect(btn).toHaveAttribute("aria-expanded", "false");
   });
 
+  it("closes settings on Escape", () => {
+    renderWithProviders(<Header />);
+    const btn = screen.getByRole("button", { expanded: false });
+    fireEvent.click(btn);
+    expect(btn).toHaveAttribute("aria-expanded", "true");
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(btn).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("settings panel has language button", () => {
     renderWithProviders(<Header />);
     fireEvent.click(screen.getByRole("button", { expanded: false }));
