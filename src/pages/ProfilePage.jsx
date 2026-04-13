@@ -30,6 +30,16 @@ import { ShortenStylePrimaryLink } from "../shared/ui/ShortenStylePrimaryLink";
 const BTN_GO =
   "flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]";
 
+/** Subtle blue / purple only near top-left and bottom-right; center stays neutral. */
+function ProfileListPanelCornerGlow() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+      <div className="absolute -left-10 -top-10 size-[7.5rem] rounded-full bg-blue-500/[0.05] blur-3xl dark:bg-blue-400/[0.11]" />
+      <div className="absolute -bottom-10 -right-10 size-[7.5rem] rounded-full bg-purple-500/[0.045] blur-3xl dark:bg-purple-400/[0.09]" />
+    </div>
+  );
+}
+
 const MotionDiv = motion.div;
 const MotionButton = motion.button;
 const IS_TEST_ENV = import.meta.env.MODE === "test";
@@ -247,15 +257,18 @@ const ProfilePage = () => {
               <LayoutGroup>
               <MotionDiv layout className="space-y-3 relative z-10">
                 {listError && !isLoadingShorties ? (
-                  <div className="rounded-2xl border border-dashed border-white/20 dark:border-white/10 bg-white/10 dark:bg-white/5 py-10 text-center">
-                    <p className="text-slate-500 dark:text-slate-400">{t.shortiesLoadError}</p>
-                    <button
-                      type="button"
-                      onClick={() => loadShorties()}
-                      className="mt-4 cursor-pointer rounded-xl px-3 py-2 text-sm font-medium border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20"
-                    >
-                      {t.shortiesRetry}
-                    </button>
+                  <div className="relative overflow-hidden rounded-2xl border border-solid border-slate-300/80 dark:border-dashed dark:border-white/10 bg-slate-100/90 dark:bg-white/5 shadow-sm dark:shadow-none py-10 text-center">
+                    <ProfileListPanelCornerGlow />
+                    <div className="relative z-10">
+                      <p className="text-slate-500 dark:text-slate-400">{t.shortiesLoadError}</p>
+                      <button
+                        type="button"
+                        onClick={() => loadShorties()}
+                        className="mt-4 cursor-pointer rounded-xl px-3 py-2 text-sm font-medium border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20"
+                      >
+                        {t.shortiesRetry}
+                      </button>
+                    </div>
                   </div>
                 ) : isLoadingShorties ? (
                   Array.from({ length: 3 }).map((_, idx) => (
@@ -269,23 +282,26 @@ const ProfilePage = () => {
                     </div>
                   ))
                 ) : shorties.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-white/20 dark:border-white/10 bg-white/10 dark:bg-white/5 py-10 text-center">
-                    <UserCircle2 size={24} className="mx-auto text-slate-400 mb-2" />
-                    <p className="text-slate-500 dark:text-slate-400">{t.shortiesEmpty}</p>
-                    <div className="mt-5 flex flex-col items-center gap-3">
-                      <ShortenStylePrimaryLink to="/" className="justify-center" size="prominent">
-                        {t.profileCreateNewShorty}
-                      </ShortenStylePrimaryLink>
-                      <GlassSecondaryButton
-                        variant="compact"
-                        onClick={() => {
-                          setQuery("");
-                          setSort("newest");
-                          setPage(1);
-                        }}
-                      >
-                        {t.profileResetFilters}
-                      </GlassSecondaryButton>
+                  <div className="relative overflow-hidden rounded-2xl border border-solid border-slate-300/80 dark:border-dashed dark:border-white/10 bg-slate-100/90 dark:bg-white/5 shadow-sm dark:shadow-none py-10 text-center">
+                    <ProfileListPanelCornerGlow />
+                    <div className="relative z-10">
+                      <UserCircle2 size={24} className="mx-auto text-slate-400 mb-2" />
+                      <p className="text-slate-500 dark:text-slate-400">{t.shortiesEmpty}</p>
+                      <div className="mt-5 flex flex-col items-center gap-3">
+                        <ShortenStylePrimaryLink to="/" className="justify-center" size="prominent">
+                          {t.profileCreateNewShorty}
+                        </ShortenStylePrimaryLink>
+                        <GlassSecondaryButton
+                          variant="compact"
+                          onClick={() => {
+                            setQuery("");
+                            setSort("newest");
+                            setPage(1);
+                          }}
+                        >
+                          {t.profileResetFilters}
+                        </GlassSecondaryButton>
+                      </div>
                     </div>
                   </div>
                 ) : (
