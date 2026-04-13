@@ -43,7 +43,10 @@ describe("translations", () => {
   it("contains all profile keys", () => {
     const required = [
       "profileTitle", "profileEdit", "shortiesTitle",
-      "paginationPrev", "paginationNext", "paginationPage",
+      "shortiesPerPage",
+      "shortiesPerPageTooltip",
+      "profileToolbarSortMenuAria",
+      "paginationPrev", "paginationNext", "paginationPage", "paginationOf", "paginationNavLabel",
       "featureUnavailable",
     ];
     for (const lang of LANGUAGES) {
