@@ -34,10 +34,11 @@ export const LangProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       lang,
+      setLang,
       toggleLang,
       t: translations[lang],
     }),
-    [lang, toggleLang],
+    [lang, setLang, toggleLang],
   );
 
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
