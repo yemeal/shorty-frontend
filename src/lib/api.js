@@ -103,6 +103,18 @@ export function apiPostJson(path, body, options = {}) {
   });
 }
 
+export function apiPatchJson(path, body, options = {}) {
+  return apiFetch(path, {
+    method: "PATCH",
+    headers: {
+      ...JSON_HEADERS,
+      ...(options.headers || {}),
+    },
+    body: JSON.stringify(body),
+    ...options,
+  });
+}
+
 export function apiPostForm(path, formData, options = {}) {
   // Used by OAuth2PasswordRequestForm-compatible endpoints.
   return apiFetch(path, {

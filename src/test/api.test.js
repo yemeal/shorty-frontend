@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ApiError, apiFetch, apiPostJson, apiPostForm } from "../lib/api";
+import { ApiError, apiFetch, apiPostJson, apiPostForm, apiPatchJson } from "../lib/api";
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -117,6 +117,25 @@ describe("apiPostJson", () => {
         method: "POST",
         credentials: "include",
         body: JSON.stringify({ email: "a@b.c", password: "12345678" }),
+        headers: expect.objectContaining({ "Content-Type": "application/json" }),
+      }),
+    );
+  });
+});
+
+describe("apiPatchJson", () => {
+  it("sends PATCH with JSON body", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      text: async () => JSON.stringify({ ok: true }),
+    });
+    await apiPatchJson("/me/profile", { bio: "x" });
+    expect(fetch).toHaveBeenCalledWith(
+      "/me/profile",
+      expect.objectContaining({
+        method: "PATCH",
+        credentials: "include",
+        body: JSON.stringify({ bio: "x" }),
         headers: expect.objectContaining({ "Content-Type": "application/json" }),
       }),
     );
