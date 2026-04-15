@@ -2,6 +2,7 @@ import React from "react";
 import { AuthProvider } from "../../AuthContext";
 import { LangProvider } from "../../LangContext";
 import { ThemeProvider } from "../../ThemeContext";
+import ProfilePreferencesSync from "../../features/profile/lib/ProfilePreferencesSync";
 import ToasterHost from "./ToasterHost";
 
 /**
@@ -12,7 +13,10 @@ const AppProviders = ({ children }) => {
     <ThemeProvider>
       <ToasterHost />
       <LangProvider>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ProfilePreferencesSync />
+          {children}
+        </AuthProvider>
       </LangProvider>
     </ThemeProvider>
   );
