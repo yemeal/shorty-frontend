@@ -218,7 +218,7 @@ describe("ProfilePage — render", () => {
   it("displays edit profile link", () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     const editLink = screen.getByText(/Edit|Редактировать/i).closest("a");
-    expect(editLink).toHaveAttribute("href", "/placeholder");
+    expect(editLink).toHaveAttribute("href", "/profile/edit");
   });
 });
 
@@ -425,7 +425,9 @@ describe("ProfilePage — card buttons", () => {
     });
     const copyBtns = screen.getAllByLabelText(/copy/i);
     fireEvent.click(copyBtns[0]);
-    expect(writeText).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalled();
+    });
   });
 
   it("QR download button appears when QR expanded", async () => {

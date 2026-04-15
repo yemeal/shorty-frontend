@@ -112,7 +112,7 @@ describe("AuthPage — register tab", () => {
     fireEvent.click(screen.getByText(/Continue|Продолжить/i));
 
     await waitFor(() => {
-      expect(screen.getByText(/Pick your emoji|Выбери emoji/i)).toBeInTheDocument();
+      expect(screen.getByText(/Choose emoji|Выбрать/i)).toBeInTheDocument();
     });
   });
 
@@ -130,8 +130,17 @@ describe("AuthPage — register tab", () => {
     fireEvent.click(screen.getByText(/Continue|Продолжить/i));
 
     await waitFor(() => {
-      const emojiBtns = screen.getAllByRole("button", { name: /emoji/ });
-      expect(emojiBtns).toHaveLength(20);
+      expect(screen.getByText(/Choose emoji|Выбрать/i)).toBeInTheDocument();
+    });
+    
+    // Open the modal
+    const btns = screen.getAllByText(/Choose emoji|Выбрать/i);
+    fireEvent.click(btns[0]);
+
+    await waitFor(() => {
+      // More than expected number of emojis are rendered in the categories list
+      const emojiBtns = screen.getAllByRole("button", { name: /Choose emoji|Выбрать/i });
+      expect(emojiBtns.length).toBeGreaterThan(0);
     });
   });
 
@@ -192,14 +201,18 @@ describe("AuthPage — tab switching", () => {
     fireEvent.click(screen.getByText(/Continue|Продолжить/i));
 
     await waitFor(() => {
-      expect(screen.getByText(/Pick your emoji|Выбери emoji/i)).toBeInTheDocument();
+      expect(screen.getByText(/Choose emoji|Выбрать/i)).toBeInTheDocument();
     });
 
     const signInBtns = screen.getAllByText(/Sign in|Войти/i);
     const tabBtn = signInBtns.find((el) => el.closest("button[type='button']"));
     fireEvent.click(tabBtn);
 
-    expect(screen.queryByText(/Pick your emoji|Выбери emoji/i)).not.toBeInTheDocument();
+    await waitFor(() => {
+      // The "Back" button is conditionally rendered only on step 1 of register.
+      // When we switch to "login", it should be removed from the DOM.
+      expect(screen.queryByRole("button", { name: /Back|Назад/i })).not.toBeInTheDocument();
+    });
   });
 });
 

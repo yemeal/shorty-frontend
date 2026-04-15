@@ -1,5 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
+/** Mutates EMOJI_CATEGORIES (e[1] search haystack, e[2]/e[3] labels) for picker tests. */
+import "../shared/lib/emojiUtils";
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,
