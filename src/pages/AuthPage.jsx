@@ -9,14 +9,12 @@ import { AUTH_DEFAULT_EMOJI, useAuth } from "../AuthContext";
 import { MOTION_EASE_SMOOTH } from "../lib/motionTokens";
 import PageHeaderReveal from "../components/PageHeaderReveal";
 import AppBackground from "../shared/ui/AppBackground";
-import { GlassSecondaryLink } from "../shared/ui/GlassSecondaryAction";
+import { GlassSecondaryButton, GlassSecondaryLink } from "../shared/ui/GlassSecondaryAction";
 import { EMAIL_RE, messageForAuthError } from "../features/auth/lib/authValidation";
 import AuthTabSwitch from "../features/auth/ui/AuthTabSwitch";
-
-const EMOJI_PRESET = [
-  "⚡️", "🔥", "🪩", "🌈", "🦊", "🐙", "🐼", "🦄", "🍓", "🍀",
-  "🌊", "🌙", "☀️", "🛰️", "🎧", "🎮", "📎", "🧠", "💎", "🪐",
-];
+import EmojiPickerModal from "../shared/ui/EmojiPickerModal";
+import { EMOJI_CATEGORIES } from "../shared/config/emojiData";
+import { getEmojiDesc } from "../shared/lib/emojiUtils";
 
 const IS_TEST_ENV = import.meta.env.MODE === "test";
 
@@ -30,7 +28,7 @@ const fieldClass = (isError) =>
 const AuthPage = ({ defaultTab = "login" }) => {
   const MotionDiv = motion.div;
   const MotionButton = motion.button;
-  const { t } = useLang();
+  const { lang, t } = useLang();
   const { login, register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -39,6 +37,7 @@ const AuthPage = ({ defaultTab = "login" }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorField, setErrorField] = useState(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [step0Expanded, setStep0Expanded] = useState(IS_TEST_ENV && (defaultTab === "login" || defaultTab === "register"));
   const [step1Expanded, setStep1Expanded] = useState(IS_TEST_ENV ? defaultTab === "register" && step === 1 : false);
   const didInitialDropletRef = useRef(IS_TEST_ENV);
@@ -293,37 +292,28 @@ const AuthPage = ({ defaultTab = "login" }) => {
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent dark:from-white/5 pointer-events-none" />
                   <div className="relative z-10 space-y-4">
-                    <div className="rounded-3xl border border-white/40 dark:border-white/10 bg-white/30 dark:bg-black/20 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{t.selectedEmoji}</p>
-                          <p className="font-semibold text-slate-700 dark:text-slate-200">{t.avatarPreview}</p>
-                        </div>
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/60 dark:bg-slate-900/60 text-3xl border border-white/40 dark:border-white/10">
+                    <div className="flex flex-col items-center justify-center gap-5 pt-3 pb-2 w-full">
+                      {/* Big static emoji preview */}
+                      <div className="relative shrink-0">
+                        <div className="absolute -inset-4 rounded-full bg-gradient-to-br from-blue-500/20 via-indigo-500/20 to-purple-500/20 blur-xl opacity-70" />
+                        <div className="relative h-32 w-32 rounded-full flex items-center justify-center text-[80px] bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-white/10 shadow-[0_8px_32px_rgba(37,99,235,0.2)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
                           {form.emoji || AUTH_DEFAULT_EMOJI}
                         </div>
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-5 gap-2">
-                      {EMOJI_PRESET.map((emoji) => (
+                      <div className="flex flex-col items-center justify-center gap-3 w-full">
+                        <p className="text-base font-semibold text-slate-600 dark:text-slate-300 text-center">
+                          {getEmojiDesc(form.emoji || AUTH_DEFAULT_EMOJI, lang)}
+                        </p>
+                        {/* Button to open picker */}
                         <button
-                          key={emoji}
                           type="button"
-                          onClick={() => {
-                            setForm((prev) => ({ ...prev, emoji }));
-                            toast.success(`${t.selectedEmoji}: ${emoji}`);
-                          }}
-                          className={`cursor-pointer h-12 rounded-2xl border transition-all flex items-center justify-center text-2xl ${
-                            form.emoji === emoji
-                              ? "bg-blue-500/15 border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.2)]"
-                              : "bg-white/35 dark:bg-black/20 border-white/50 dark:border-white/10 hover:border-blue-300"
-                          }`}
-                          aria-label={`emoji ${emoji}`}
+                          onClick={() => setIsEmojiPickerOpen(true)}
+                          className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-white/60 dark:border-white/10 bg-white/50 dark:bg-black/30 hover:bg-white/80 dark:hover:bg-black/50 shadow-sm hover:shadow-md transition-all px-5 py-2.5 text-sm font-display font-bold text-slate-800 dark:text-slate-200"
                         >
-                          {emoji}
+                         {t.profileEditChangeEmoji || "Choose emoji"}
                         </button>
-                      ))}
+                      </div>
                     </div>
                   </div>
                 </MotionDiv>
@@ -333,14 +323,14 @@ const AuthPage = ({ defaultTab = "login" }) => {
           <div className="bg-white/50 dark:bg-slate-900/35 backdrop-blur-[30px] border border-white/50 dark:border-white/10 rounded-3xl shadow-lg dark:shadow-2xl p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               {tab === "register" && step === 1 ? (
-                <button
+                <GlassSecondaryButton
                   type="button"
                   onClick={() => setStep(0)}
-                  className="order-2 sm:order-1 w-full sm:w-auto cursor-pointer inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-base font-display font-bold border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/35 transition"
+                  className="order-2 sm:order-1 w-full sm:w-auto"
                 >
                   <ArrowLeft size={16} />
                   {t.back}
-                </button>
+                </GlassSecondaryButton>
               ) : (
                 <GlassSecondaryLink
                   to="/"
@@ -384,6 +374,17 @@ const AuthPage = ({ defaultTab = "login" }) => {
           </div>
         </form>
       </main>
+
+      <EmojiPickerModal
+        isOpen={isEmojiPickerOpen}
+        onSelect={(emoji) => {
+          setForm((prev) => ({ ...prev, emoji }));
+          toast.success(`${t.selectedEmoji}: ${emoji}`);
+        }}
+        onClose={() => setIsEmojiPickerOpen(false)}
+        t={t}
+        lang={lang}
+      />
     </div>
   );
 };

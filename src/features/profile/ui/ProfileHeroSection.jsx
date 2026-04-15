@@ -35,7 +35,7 @@ const ProfileHeroSection = ({ t, profileEmoji, username, email }) => {
         </p>
         <div className="mt-3">
           <Link
-            to="/placeholder"
+            to="/profile/edit"
             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/60 dark:border-white/10 bg-white/35 dark:bg-black/20 hover:bg-white/50 dark:hover:bg-black/35 transition px-4 py-2.5 text-sm font-semibold"
           >
             <PencilLine size={16} />

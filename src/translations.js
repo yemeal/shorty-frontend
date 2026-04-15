@@ -123,7 +123,41 @@ export const translations = {
     deleteConfirmIrreversible: "This cannot be undone. The link will be permanently removed.",
     deleteConfirmYes: "Delete",
     deleteConfirmNo: "Cancel",
-    profileDeleteFailedTitle: "Could not delete shorty"
+    profileDeleteFailedTitle: "Could not delete shorty",
+    // Profile Edit
+    profileEditTitle: "Edit Profile",
+    profileEditSubtitle: "Customize your identity and preferences",
+    profileEditAvatarLabel: "Emoji Avatar",
+    profileEditAvatarHint: "Click on the emoji to change it",
+    profileEditChangeEmoji: "Choose emoji",
+    profileEditBioLabel: "Bio",
+    profileEditBioPlaceholder: "Tell something about yourself...",
+    profileEditThemeLabel: "Theme",
+    profileEditLangLabel: "Language",
+    profileEditTimezoneLabel: "Timezone",
+    profileEditTimezoneHintBrowser:
+      "From your browser; we store it on your account when you save the profile.",
+    profileEditTimezoneHintSynced: "Matches this device (browser timezone).",
+    profileEditTimezoneHintDiff:
+      "Saved on account: {account}. This browser now: {browser}.",
+    profileEditThemeLight: "Light",
+    profileEditThemeDark: "Dark",
+    profileEditThemeSystem: "System",
+    profileEditSave: "Save changes",
+    profileEditSaveSuccess: "Profile updated!",
+    profileEditCancel: "Cancel",
+    // Emoji Picker
+    emojiPickerTitle: "Choose emoji",
+    emojiPickerSearch: "Search emoji...",
+    emojiPickerNoResults: "No emoji found",
+    emojiCatSmileys: "Smileys & Emotion",
+    emojiCatPeople: "People & Body",
+    emojiCatAnimals: "Animals & Nature",
+    emojiCatFood: "Food & Drink",
+    emojiCatTravel: "Travel & Places",
+    emojiCatActivities: "Activities",
+    emojiCatObjects: "Objects",
+    emojiCatSymbols: "Symbols & Hearts"
   },
   ru: {
     brand: "шорти.рф",
@@ -246,6 +280,40 @@ export const translations = {
     deleteConfirmIrreversible: "Восстановление будет невозможно.",
     deleteConfirmYes: "Удалить",
     deleteConfirmNo: "Отмена",
-    profileDeleteFailedTitle: "Не удалось удалить шортис"
+    profileDeleteFailedTitle: "Не удалось удалить шортис",
+    // Profile Edit
+    profileEditTitle: "Редактирование профиля",
+    profileEditSubtitle: "Настрой свою личность и предпочтения",
+    profileEditAvatarLabel: "Emoji-аватар",
+    profileEditAvatarHint: "Нажми на эмоджи, чтобы изменить",
+    profileEditChangeEmoji: "Выбрать эмоджи",
+    profileEditBioLabel: "Био",
+    profileEditBioPlaceholder: "Расскажи немного о себе...",
+    profileEditThemeLabel: "Тема",
+    profileEditLangLabel: "Язык",
+    profileEditTimezoneLabel: "Часовой пояс",
+    profileEditTimezoneHintBrowser:
+      "Сейчас по данным браузера; после «Сохранить» запишется в профиль.",
+    profileEditTimezoneHintSynced: "Совпадает с часовым поясом этого устройства (браузера).",
+    profileEditTimezoneHintDiff:
+      "В профиле сохранено: {account}. Сейчас в браузере: {browser}.",
+    profileEditThemeLight: "Светлая",
+    profileEditThemeDark: "Тёмная",
+    profileEditThemeSystem: "Системная",
+    profileEditSave: "Сохранить",
+    profileEditSaveSuccess: "Профиль обновлён!",
+    profileEditCancel: "Отмена",
+    // Emoji Picker
+    emojiPickerTitle: "Выбери эмоджи",
+    emojiPickerSearch: "Поиск эмоджи...",
+    emojiPickerNoResults: "Эмоджи не найдены",
+    emojiCatSmileys: "Смайлики и эмоции",
+    emojiCatPeople: "Люди и жесты",
+    emojiCatAnimals: "Животные и природа",
+    emojiCatFood: "Еда и напитки",
+    emojiCatTravel: "Путешествия и места",
+    emojiCatActivities: "Активности",
+    emojiCatObjects: "Объекты",
+    emojiCatSymbols: "Символы и сердца"
   }
 };

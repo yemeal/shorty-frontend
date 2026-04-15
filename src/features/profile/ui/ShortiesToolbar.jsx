@@ -153,8 +153,8 @@ const ShortiesToolbar = ({
                   className={`flex w-full min-h-0 justify-center overflow-hidden ${!sortOpen ? "pointer-events-none" : ""}`}
                 >
                   <div className={dropletWidthClass(sortOpen)} style={dropletEaseStyle}>
-                    <div className="px-0.5 pb-2 pt-0.5">
-                      <div className="glass-panel glass-panel--menu rounded-3xl border-slate-200/20 dark:border-white/10 overflow-hidden relative shadow-lg dark:shadow-xl">
+                    <div className="px-4 pb-6 pt-1 -mx-4">
+                      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-[40px] rounded-3xl border border-white/50 dark:border-white/10 overflow-hidden relative shadow-lg dark:shadow-2xl">
                         <div
                           role="listbox"
                           aria-label={t.profileToolbarSortMenuAria}
@@ -218,9 +218,9 @@ const ShortiesToolbar = ({
                   className={`flex w-full min-h-0 justify-center overflow-hidden ${!pageSizeOpen ? "pointer-events-none" : ""}`}
                 >
                   <div className={dropletWidthClass(pageSizeOpen)} style={dropletEaseStyle}>
-                    <div className="px-0.5 pb-2 pt-0.5">
+                    <div className="px-4 pb-6 pt-1 -mx-4">
                       <div
-                        className="glass-panel glass-panel--menu rounded-3xl border-slate-200/20 dark:border-white/10 overflow-hidden relative shadow-lg dark:shadow-xl"
+                        className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-[40px] rounded-3xl border border-white/50 dark:border-white/10 overflow-hidden relative shadow-lg dark:shadow-2xl"
                         role="dialog"
                         aria-label={t.shortiesPerPage}
                         aria-modal="false"

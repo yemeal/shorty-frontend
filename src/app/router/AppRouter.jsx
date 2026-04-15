@@ -13,6 +13,7 @@ import RouteFallback from "./RouteFallback";
 const HomePage = lazy(() => import("../../pages/HomePage"));
 const AuthPage = lazy(() => import("../../pages/AuthPage"));
 const ProfilePage = lazy(() => import("../../pages/ProfilePage"));
+const ProfileEditPage = lazy(() => import("../../pages/ProfileEditPage"));
 const PlaceholderPage = lazy(() => import("../../pages/PlaceholderPage"));
 const NotFoundPage = lazy(() => import("../../pages/NotFoundPage"));
 
@@ -35,6 +36,14 @@ const AppRouter = () => {
             element={
               <RequireAuth>
                 <ProfilePage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/profile/edit"
+            element={
+              <RequireAuth>
+                <ProfileEditPage />
               </RequireAuth>
             }
           />
