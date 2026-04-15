@@ -6,6 +6,10 @@ import { useTheme } from "../ThemeContext";
 import { useAuth, AUTH_DEFAULT_EMOJI } from "../AuthContext";
 import { GLASS_HOVER_INTERACTIVE_CLASS, MOTION_EASE_SMOOTH } from "../lib/motionTokens";
 import { useDismissOnOutsidePress } from "../hooks/useDismissOnOutsidePress";
+import {
+  silentSyncProfilePreferences,
+  themeAfterHeaderToggle,
+} from "../features/profile/api/silentSyncProfilePreferences";
 
 const BUTTON_CLASS =
   `flex items-center gap-3 cursor-pointer font-display text-left bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 p-3 rounded-xl active:scale-[0.97] shadow-[0_10px_25px_-10px_rgba(0,0,0,0.05)] dark:shadow-none group ${GLASS_HOVER_INTERACTIVE_CLASS}`;
@@ -31,6 +35,20 @@ const Header = () => {
     rootRefs: [settingsTriggerRef, settingsPanelRef],
     onDismiss: closeSettings,
   });
+
+  const onSettingsLangClick = useCallback(() => {
+    const nextLang = lang === "en" ? "ru" : "en";
+    toggleLang();
+    if (!isAuthenticated) return;
+    silentSyncProfilePreferences({ ui_language: nextLang });
+  }, [isAuthenticated, lang, toggleLang]);
+
+  const onSettingsThemeClick = useCallback(() => {
+    const nextTheme = themeAfterHeaderToggle(theme);
+    toggleTheme();
+    if (!isAuthenticated) return;
+    silentSyncProfilePreferences({ ui_theme: nextTheme });
+  }, [isAuthenticated, theme, toggleTheme]);
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 sm:pt-6">
@@ -100,7 +118,7 @@ const Header = () => {
               <div className="glass-panel glass-panel--menu rounded-3xl border-slate-200/20 dark:border-white/10 overflow-hidden relative">
                 <div className="flex flex-col gap-2 p-3 sm:p-4 relative z-10">
 
-                  <button onClick={toggleLang} className={BUTTON_CLASS}>
+                  <button type="button" onClick={onSettingsLangClick} className={BUTTON_CLASS}>
                     <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg group-hover:scale-110 transition-transform">
                       <Globe size={18} className="text-blue-600 dark:text-blue-400" />
                     </div>
@@ -110,7 +128,7 @@ const Header = () => {
                     </div>
                   </button>
 
-                  <button onClick={toggleTheme} className={BUTTON_CLASS}>
+                  <button type="button" onClick={onSettingsThemeClick} className={BUTTON_CLASS}>
                     <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg group-hover:scale-110 transition-transform">
                       {theme === 'dark' ? <Sun size={18} className="text-indigo-600 dark:text-indigo-400" /> : <Moon size={18} className="text-indigo-600 dark:text-indigo-400" />}
                     </div>
