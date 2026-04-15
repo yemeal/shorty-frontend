@@ -30,9 +30,33 @@ describe("useAuth — initial state", () => {
       "shorty-auth-user",
       JSON.stringify({ id: 1, username: "u", email: "a@b.c", emoji: "🦊" }),
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValue({
-      ok: true,
-      text: async () => JSON.stringify({ ok: true }),
+    vi.spyOn(globalThis, "fetch").mockImplementation((url) => {
+      const u = String(url);
+      if (u.includes("/auth/refresh")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => JSON.stringify({ ok: true }),
+        });
+      }
+      if (u.includes("/me")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () =>
+            JSON.stringify({
+              id: 1,
+              username: "u",
+              email: "a@b.c",
+              profile: {
+                emoji_avatar: "🦊",
+                ui_theme: "system",
+                ui_language: "en",
+                bio: null,
+                timezone: null,
+              },
+            }),
+        });
+      }
+      return Promise.reject(new Error(`unexpected ${url}`));
     });
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
@@ -101,10 +125,40 @@ describe("useAuth — login", () => {
       "shorty-auth-user",
       JSON.stringify({ email: "a@b.c", emoji: "🐼" }),
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValue({
-      ok: true,
-      text: async () =>
-        JSON.stringify({ user: { id: 1, username: "u", email: "a@b.c" } }),
+    vi.spyOn(globalThis, "fetch").mockImplementation((url) => {
+      const u = String(url);
+      if (u.includes("/auth/refresh")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => JSON.stringify({ ok: true }),
+        });
+      }
+      if (u.includes("/me")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () =>
+            JSON.stringify({
+              id: 1,
+              username: "u",
+              email: "a@b.c",
+              profile: {
+                emoji_avatar: "🐼",
+                ui_theme: "system",
+                ui_language: "en",
+                bio: null,
+                timezone: null,
+              },
+            }),
+        });
+      }
+      if (u.includes("/auth/login")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () =>
+            JSON.stringify({ user: { id: 1, username: "u", email: "a@b.c" } }),
+        });
+      }
+      return Promise.reject(new Error(`unexpected ${url}`));
     });
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
@@ -119,10 +173,33 @@ describe("useAuth — login", () => {
 
 describe("useAuth — register", () => {
   it("calls /auth/register and stores user with emoji", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue({
-      ok: true,
-      text: async () =>
-        JSON.stringify({ user: { id: 2, username: "newguy", email: "n@b.c" } }),
+    vi.spyOn(globalThis, "fetch").mockImplementation((url, init) => {
+      if (String(url).endsWith("/auth/register")) {
+        const body = JSON.parse(init.body);
+        expect(body).toMatchObject({
+          username: "newguy",
+          email: "n@b.c",
+          password: "12345678",
+          emoji_avatar: "🔥",
+        });
+        expect(body).toHaveProperty("timezone");
+        expect(body.timezone === null || typeof body.timezone === "string").toBe(true);
+        if (typeof body.timezone === "string") {
+          expect(body.timezone.length).toBeGreaterThan(0);
+        }
+      }
+      return Promise.resolve({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            user: {
+              id: 2,
+              username: "newguy",
+              email: "n@b.c",
+              profile: { emoji_avatar: "🔥", ui_theme: "system", ui_language: "en", bio: null, timezone: "UTC" },
+            },
+          }),
+      });
     });
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
@@ -142,10 +219,17 @@ describe("useAuth — register", () => {
   });
 
   it("uses default emoji when none provided", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue({
-      ok: true,
-      text: async () =>
-        JSON.stringify({ user: { id: 2, username: "u", email: "n@b.c" } }),
+    vi.spyOn(globalThis, "fetch").mockImplementation((url, init) => {
+      if (String(url).endsWith("/auth/register")) {
+        const body = JSON.parse(init.body);
+        expect(body.emoji_avatar).toBe(AUTH_DEFAULT_EMOJI);
+        expect(body).toHaveProperty("timezone");
+      }
+      return Promise.resolve({
+        ok: true,
+        text: async () =>
+          JSON.stringify({ user: { id: 2, username: "u", email: "n@b.c" } }),
+      });
     });
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
@@ -190,8 +274,27 @@ describe("useAuth — logout", () => {
       JSON.stringify({ id: 1, username: "u", email: "a@b.c" }),
     );
     vi.spyOn(globalThis, "fetch").mockImplementation(async (path) => {
-      if (String(path).includes("/auth/refresh")) {
+      const p = String(path);
+      if (p.includes("/auth/refresh")) {
         return { ok: true, text: async () => JSON.stringify({ ok: true }) };
+      }
+      if (p.includes("/me")) {
+        return {
+          ok: true,
+          text: async () =>
+            JSON.stringify({
+              id: 1,
+              username: "u",
+              email: "a@b.c",
+              profile: {
+                emoji_avatar: "⚡️",
+                ui_theme: "system",
+                ui_language: "en",
+                bio: null,
+                timezone: null,
+              },
+            }),
+        };
       }
       throw new Error("network down");
     });

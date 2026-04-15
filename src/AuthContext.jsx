@@ -34,6 +34,36 @@ function storeUser(user) {
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 }
 
+/**
+ * Maps GET /me (UserResponse) into the client snapshot: top-level `emoji` for UI.
+ * @param {Record<string, unknown>} raw - API user object (may include `profile`)
+ * @param {Record<string, unknown> | null} [prevSnapshot] - previous stored user (same session) for emoji fallback
+ */
+export function normalizeUserFromServer(raw, prevSnapshot = null) {
+  if (!raw || typeof raw !== "object") return null;
+  const profile = raw.profile;
+  const prev = prevSnapshot;
+  const sameAccount =
+    prev && typeof prev.email === "string" && prev.email === raw.email;
+  return {
+    ...raw,
+    emoji:
+      (profile && profile.emoji_avatar) ||
+      (sameAccount ? prev.emoji : null) ||
+      DEFAULT_EMOJI,
+  };
+}
+
+/** IANA timezone for UserCreate (backend); null if unavailable. */
+function getClientTimeZone() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return typeof tz === "string" && tz.trim() ? tz.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => readStoredUser());
   const [isBootstrapping, setIsBootstrapping] = useState(true);
@@ -52,15 +82,20 @@ export const AuthProvider = ({ children }) => {
    */
   const register = useCallback(
     async ({ username, email, password, emoji }) => {
+      const emoji_avatar = emoji || DEFAULT_EMOJI;
+      const timezone = getClientTimeZone();
+
       const data = await apiPostJson("/auth/register", {
         username,
         email,
         password,
+        emoji_avatar,
+        timezone,
       });
 
-      const nextUser = {
-        ...(data?.user || {}),
-        emoji: emoji || DEFAULT_EMOJI,
+      const nextUser = normalizeUserFromServer(data?.user, null) ?? {
+        ...data?.user,
+        emoji: emoji_avatar,
       };
       commitUser(nextUser);
       return nextUser;
@@ -75,15 +110,16 @@ export const AuthProvider = ({ children }) => {
         password,
       });
 
-      // Preserve custom emoji when the same user logs in again on this device.
       const previous = readStoredUser();
-      const nextUser = {
-        ...(data?.user || {}),
-        emoji:
-          previous?.email === data?.user?.email
-            ? previous?.emoji || DEFAULT_EMOJI
-            : DEFAULT_EMOJI,
-      };
+      const nextUser =
+        normalizeUserFromServer(data?.user, previous) ??
+        ({
+          ...data?.user,
+          emoji:
+            previous?.email === data?.user?.email
+              ? previous?.emoji || DEFAULT_EMOJI
+              : DEFAULT_EMOJI,
+        });
 
       commitUser(nextUser);
       return nextUser;
@@ -130,12 +166,21 @@ export const AuthProvider = ({ children }) => {
       }
 
       const refreshed = await refreshSession({ clearOnFail: true });
-      if (isMounted) {
-        if (!refreshed) {
-          commitUser(null);
-        }
+      if (!isMounted) return;
+      if (!refreshed) {
+        commitUser(null);
         setIsBootstrapping(false);
+        return;
       }
+
+      try {
+        const me = await apiFetch("/me/");
+        const normalized = normalizeUserFromServer(me, stored);
+        if (normalized) commitUser(normalized);
+      } catch {
+        commitUser(null);
+      }
+      if (isMounted) setIsBootstrapping(false);
     };
 
     bootstrap();
