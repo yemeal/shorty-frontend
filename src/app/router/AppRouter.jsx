@@ -9,6 +9,7 @@ import NetworkActivityIndicator from "../../components/NetworkActivityIndicator"
 import RequireAuth from "./RequireAuth";
 import ScrollToTop from "./ScrollToTop";
 import RouteFallback from "./RouteFallback";
+import CookieNotice from "../../shared/ui/CookieNotice";
 
 const HomePage = lazy(() => import("../../pages/HomePage"));
 const AuthPage = lazy(() => import("../../pages/AuthPage"));
@@ -16,6 +17,7 @@ const ProfilePage = lazy(() => import("../../pages/ProfilePage"));
 const ProfileEditPage = lazy(() => import("../../pages/ProfileEditPage"));
 const PlaceholderPage = lazy(() => import("../../pages/PlaceholderPage"));
 const NotFoundPage = lazy(() => import("../../pages/NotFoundPage"));
+const LegalPage = lazy(() => import("../../pages/LegalPage"));
 
 /**
  * Central app routes and navigation redirects.
@@ -52,10 +54,15 @@ const AppRouter = () => {
             element={<Navigate to="/placeholder" replace />}
           />
           <Route path="/placeholder" element={<PlaceholderPage />} />
+          <Route path="/legal/privacy" element={<LegalPage docKey="privacy" />} />
+          <Route path="/legal/terms" element={<LegalPage docKey="terms" />} />
+          <Route path="/legal/cookies" element={<LegalPage docKey="cookies" />} />
+          <Route path="/legal/contacts" element={<LegalPage docKey="contacts" />} />
           <Route path="/not-found" element={<NotFoundPage />} />
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Routes>
       </Suspense>
+      <CookieNotice />
     </Router>
   );
 };

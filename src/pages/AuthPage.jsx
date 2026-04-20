@@ -1,25 +1,25 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import Header from "../components/Header";
 import { useLang } from "../LangContext";
 import { AUTH_DEFAULT_EMOJI, useAuth } from "../AuthContext";
 import { MOTION_EASE_SMOOTH } from "../lib/motionTokens";
 import PageHeaderReveal from "../components/PageHeaderReveal";
-import AppBackground from "../shared/ui/AppBackground";
 import { GlassSecondaryButton, GlassSecondaryLink } from "../shared/ui/GlassSecondaryAction";
 import { EMAIL_RE, messageForAuthError } from "../features/auth/lib/authValidation";
 import AuthTabSwitch from "../features/auth/ui/AuthTabSwitch";
-import EmojiPickerModal from "../shared/ui/EmojiPickerModal";
-import { EMOJI_CATEGORIES } from "../shared/config/emojiData";
-import { getEmojiDesc } from "../shared/lib/emojiUtils";
+import EmojiGlyph from "../shared/ui/EmojiGlyph";
+import AppPageShell from "../shared/ui/AppPageShell";
+import { getLegalCopy, LEGAL_ROUTES } from "../shared/config/legal";
+import { useEmojiLabel } from "../shared/lib/useEmojiLabel";
 
 const IS_TEST_ENV = import.meta.env.MODE === "test";
+const LazyEmojiPickerModal = lazy(() => import("../shared/ui/EmojiPickerModal"));
 
 const fieldClass = (isError) =>
-  `mt-2 w-full rounded-2xl border px-4 py-3 outline-none transition font-mono text-base tracking-[0.01em] placeholder:font-mono placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-white ${
+  `mt-2 w-full rounded-2xl border px-4 py-3 outline-none transition-[border-color,box-shadow,background-color] duration-200 type-ui-input text-base placeholder:font-sans placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-white ${
     isError
       ? "border-red-500/70 focus:border-red-500 focus:ring-2 focus:ring-red-500/30 bg-red-500/5 shadow-[inset_0_2px_12px_rgba(239,68,68,0.15)]"
       : "border-white/50 dark:border-white/10 bg-white/25 dark:bg-black/30 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 shadow-[inset_0_2px_12px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_10px_0_rgba(255,255,255,0.05)]"
@@ -28,14 +28,18 @@ const fieldClass = (isError) =>
 const AuthPage = ({ defaultTab = "login" }) => {
   const MotionDiv = motion.div;
   const MotionButton = motion.button;
+  const reduceMotion = useReducedMotion();
   const { lang, t } = useLang();
   const { login, register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const legal = useMemo(() => getLegalCopy(lang), [lang]);
 
   const [tab, setTab] = useState(defaultTab);
   const [step, setStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [errorField, setErrorField] = useState(null);
+  const [agreementError, setAgreementError] = useState(false);
+  const [hasAcceptedLegal, setHasAcceptedLegal] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [step0Expanded, setStep0Expanded] = useState(IS_TEST_ENV && (defaultTab === "login" || defaultTab === "register"));
@@ -47,6 +51,8 @@ const AuthPage = ({ defaultTab = "login" }) => {
     password: "",
     emoji: AUTH_DEFAULT_EMOJI,
   });
+  const selectedEmoji = form.emoji || AUTH_DEFAULT_EMOJI;
+  const selectedEmojiLabel = useEmojiLabel(selectedEmoji, lang);
 
   useEffect(() => {
     setTab(defaultTab);
@@ -108,6 +114,7 @@ const AuthPage = ({ defaultTab = "login" }) => {
     setTab(nextTab);
     setStep(0);
     setErrorField(null);
+    setAgreementError(false);
     navigate(nextTab === "register" ? "/register" : "/login");
   };
 
@@ -148,6 +155,12 @@ const AuthPage = ({ defaultTab = "login" }) => {
       return;
     }
 
+    if (tab === "register" && !hasAcceptedLegal) {
+      setAgreementError(true);
+      toast.error(legal.consentError);
+      return;
+    }
+
     setIsLoading(true);
     try {
       if (tab === "login") {
@@ -171,17 +184,13 @@ const AuthPage = ({ defaultTab = "login" }) => {
   };
 
   return (
-    <div className="min-h-screen text-slate-800 dark:text-slate-200 font-sans selection:bg-blue-500/30 relative overflow-hidden transition-colors duration-500">
-      <AppBackground />
-
-      <Header />
-
-      <main className="min-h-screen max-w-4xl mx-auto px-4 sm:px-6 pt-28 sm:pt-32 pb-10 flex flex-col items-center justify-center gap-5 sm:gap-6">
+    <AppPageShell mainClassName="w-full flex">
+      <div className="max-w-4xl mx-auto w-full flex-1 px-4 sm:px-6 pt-28 sm:pt-32 pb-12 flex flex-col items-center justify-center gap-5 sm:gap-6">
         <PageHeaderReveal
           title={title}
           subtitle={subtitle}
           className="text-center space-y-2"
-          titleClassName="font-display text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white"
+          titleClassName="type-display-title text-3xl sm:text-5xl text-slate-900 dark:text-white"
           subtitleClassName="text-sm sm:text-base text-slate-600 dark:text-slate-400"
         />
 
@@ -208,9 +217,11 @@ const AuthPage = ({ defaultTab = "login" }) => {
                       }`}
                     >
                       <div className="overflow-hidden min-h-0">
-                        <label className="block">
-                          <span className="text-sm sm:text-base font-display font-semibold text-slate-600 dark:text-slate-300">{t.usernameLabel}</span>
+                        <label htmlFor="register-username" className="block">
+                          <span className="text-sm sm:text-base type-ui-label text-slate-600 dark:text-slate-300">{t.usernameLabel}</span>
                           <input
+                            id="register-username"
+                            name="username"
                             type="text"
                             value={form.username}
                             onChange={(e) => {
@@ -219,6 +230,10 @@ const AuthPage = ({ defaultTab = "login" }) => {
                             }}
                             className={fieldClass(errorField === "username")}
                             placeholder={t.usernamePlaceholder}
+                            autoComplete="username"
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
                             maxLength={20}
                             aria-invalid={errorField === "username"}
                           />
@@ -226,9 +241,11 @@ const AuthPage = ({ defaultTab = "login" }) => {
                       </div>
                     </div>
 
-                    <label className="block">
-                      <span className="text-sm sm:text-base font-display font-semibold text-slate-600 dark:text-slate-300">Email</span>
+                    <label htmlFor="auth-email" className="block">
+                      <span className="text-sm sm:text-base type-ui-label text-slate-600 dark:text-slate-300">Email</span>
                       <input
+                        id="auth-email"
+                        name="email"
                         type="email"
                         value={form.email}
                         onChange={(e) => {
@@ -237,14 +254,21 @@ const AuthPage = ({ defaultTab = "login" }) => {
                         }}
                         className={fieldClass(errorField === "email")}
                         placeholder="you@example.com"
+                        autoComplete="email"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        inputMode="email"
+                        spellCheck={false}
                         aria-invalid={errorField === "email"}
                       />
                     </label>
 
-                    <label className="block">
-                      <span className="text-sm sm:text-base font-display font-semibold text-slate-600 dark:text-slate-300">Password</span>
+                    <label htmlFor="auth-password" className="block">
+                      <span className="text-sm sm:text-base type-ui-label text-slate-600 dark:text-slate-300">Password</span>
                       <div className="relative">
                         <input
+                          id="auth-password"
+                          name="password"
                           type={isPasswordVisible ? "text" : "password"}
                           value={form.password}
                           onChange={(e) => {
@@ -253,6 +277,8 @@ const AuthPage = ({ defaultTab = "login" }) => {
                           }}
                           className={`${fieldClass(errorField === "password")} pr-12`}
                           placeholder={t.passwordPlaceholder}
+                          autoComplete={tab === "register" ? "new-password" : "current-password"}
+                          spellCheck={false}
                           aria-invalid={errorField === "password"}
                         />
                         <button
@@ -296,20 +322,25 @@ const AuthPage = ({ defaultTab = "login" }) => {
                       {/* Big static emoji preview */}
                       <div className="relative shrink-0">
                         <div className="absolute -inset-4 rounded-full bg-gradient-to-br from-blue-500/20 via-indigo-500/20 to-purple-500/20 blur-xl opacity-70" />
-                        <div className="relative h-32 w-32 rounded-full flex items-center justify-center text-[80px] bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-white/10 shadow-[0_8px_32px_rgba(37,99,235,0.2)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-                          {form.emoji || AUTH_DEFAULT_EMOJI}
-                        </div>
+                        <EmojiGlyph
+                          emoji={selectedEmoji}
+                          label={selectedEmojiLabel}
+                          loading="eager"
+                          className="relative h-32 w-32 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-white/10 shadow-[0_8px_32px_rgba(37,99,235,0.2)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+                          imgClassName="p-6"
+                          textClassName="text-[80px]"
+                        />
                       </div>
 
                       <div className="flex flex-col items-center justify-center gap-3 w-full">
-                        <p className="text-base font-semibold text-slate-600 dark:text-slate-300 text-center">
-                          {getEmojiDesc(form.emoji || AUTH_DEFAULT_EMOJI, lang)}
+                        <p className="text-base type-ui-label text-slate-600 dark:text-slate-300 text-center">
+                          {selectedEmojiLabel}
                         </p>
                         {/* Button to open picker */}
                         <button
                           type="button"
                           onClick={() => setIsEmojiPickerOpen(true)}
-                          className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-white/60 dark:border-white/10 bg-white/50 dark:bg-black/30 hover:bg-white/80 dark:hover:bg-black/50 shadow-sm hover:shadow-md transition-all px-5 py-2.5 text-sm font-display font-bold text-slate-800 dark:text-slate-200"
+                          className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-white/60 dark:border-white/10 bg-white/50 dark:bg-black/30 hover:bg-white/80 dark:hover:bg-black/50 shadow-sm hover:shadow-md transition-[background-color,border-color,box-shadow,transform] duration-200 px-5 py-2.5 text-sm type-ui-label text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/35"
                         >
                          {t.profileEditChangeEmoji || "Choose emoji"}
                         </button>
@@ -319,6 +350,56 @@ const AuthPage = ({ defaultTab = "login" }) => {
                 </MotionDiv>
               </div>
             </div>
+
+          {tab === "register" && step === 1 ? (
+            <label className="block">
+              <input
+                type="checkbox"
+                checked={hasAcceptedLegal}
+                onChange={(event) => {
+                  setHasAcceptedLegal(event.target.checked);
+                  if (agreementError) setAgreementError(false);
+                }}
+                aria-invalid={agreementError ? "true" : "false"}
+                aria-label={legal.consentLabel}
+                className="peer sr-only"
+              />
+              <span
+                className={`glass-frost-surface flex items-start gap-3 rounded-3xl border px-4 py-3.5 transition-[border-color,background-color,box-shadow] duration-200 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-400/35 ${
+                  agreementError
+                    ? "border-red-500/60 bg-red-500/5 shadow-[0_0_0_1px_rgba(239,68,68,0.18),0_16px_34px_-26px_rgba(239,68,68,0.55)]"
+                    : "border-slate-200/80 dark:border-white/10 bg-white/65 dark:bg-black/20 shadow-[0_16px_34px_-26px_rgba(59,130,246,0.2)]"
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[0.8rem] border transition-[border-color,background-color,box-shadow] duration-200 ${
+                    hasAcceptedLegal
+                      ? "border-blue-400/80 bg-blue-500/95 text-white shadow-[0_10px_24px_-14px_rgba(37,99,235,0.85)]"
+                      : "border-slate-300 bg-slate-100 text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(15,23,42,0.06)] dark:border-white/14 dark:bg-white/[0.06] dark:text-transparent dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                  }`}
+                >
+                  <Check size={12} strokeWidth={3} />
+                </span>
+                <span className="min-w-0 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span>{lang === "ru" ? "Я принимаю " : "I accept the "}</span>
+                  <Link
+                    to={LEGAL_ROUTES.terms}
+                    className="type-ui-label text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                  >
+                    {lang === "ru" ? "Пользовательское соглашение" : "Terms of Use"}
+                  </Link>
+                  <span>{lang === "ru" ? " и " : " and the "}</span>
+                  <Link
+                    to={LEGAL_ROUTES.privacy}
+                    className="type-ui-label text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                  >
+                    {lang === "ru" ? "Политику обработки персональных данных" : "Privacy Policy"}
+                  </Link>
+                </span>
+              </span>
+            </label>
+          ) : null}
 
           <div className="bg-white/50 dark:bg-slate-900/35 backdrop-blur-[30px] border border-white/50 dark:border-white/10 rounded-3xl shadow-lg dark:shadow-2xl p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -343,10 +424,10 @@ const AuthPage = ({ defaultTab = "login" }) => {
 
               <MotionButton
                 type="submit"
-                whileTap={{ scale: 0.97 }}
-                whileHover={{ scale: 1.02 }}
+                whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+                whileHover={reduceMotion ? undefined : { scale: 1.02 }}
                 disabled={isLoading}
-                className="order-1 sm:order-2 w-full sm:w-auto cursor-pointer bg-blue-500/15 dark:bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 dark:border-blue-400/40 border-t-blue-400/20 dark:border-t-white/20 text-blue-600 dark:text-white font-display font-black text-base px-5 py-3 sm:h-12 rounded-2xl transition-all flex items-center justify-center gap-2 group/btn active:scale-[0.97] shrink-0 shadow-xl dark:shadow-[0_0_25px_rgba(37,99,235,0.15)] overflow-hidden relative disabled:opacity-70 disabled:cursor-not-allowed"
+                className="order-1 sm:order-2 w-full sm:w-auto cursor-pointer bg-blue-500/15 dark:bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 dark:border-blue-400/40 border-t-blue-400/20 dark:border-t-white/20 text-blue-600 dark:text-white type-display-cta text-base px-5 py-3 sm:h-12 rounded-2xl transition-[background-color,border-color,box-shadow,transform,opacity] duration-200 flex items-center justify-center gap-2 group/btn active:scale-[0.97] shrink-0 shadow-xl dark:shadow-[0_0_25px_rgba(37,99,235,0.15)] overflow-hidden relative disabled:opacity-70 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/35"
               >
                 {isLoading ? (
                   <>
@@ -364,28 +445,34 @@ const AuthPage = ({ defaultTab = "login" }) => {
                     {tab === "register" ? <Sparkles size={16} /> : <Check size={16} />}
                   </>
                 )}
-                <MotionDiv
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/40 via-indigo-500/50 via-purple-400/40 to-transparent -skew-x-[20deg] blur-md"
-                  animate={{ x: ["-100%", "200%"] }}
-                  transition={{ repeat: Infinity, duration: 6, ease: "linear", repeatDelay: 0.5 }}
-                />
+                {reduceMotion ? null : (
+                  <MotionDiv
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/40 via-indigo-500/50 via-purple-400/40 to-transparent -skew-x-[20deg] blur-md"
+                    animate={{ x: ["-100%", "200%"] }}
+                    transition={{ repeat: Infinity, duration: 6, ease: "linear", repeatDelay: 0.5 }}
+                  />
+                )}
               </MotionButton>
             </div>
           </div>
         </form>
-      </main>
+      </div>
 
-      <EmojiPickerModal
-        isOpen={isEmojiPickerOpen}
-        onSelect={(emoji) => {
-          setForm((prev) => ({ ...prev, emoji }));
-          toast.success(`${t.selectedEmoji}: ${emoji}`);
-        }}
-        onClose={() => setIsEmojiPickerOpen(false)}
-        t={t}
-        lang={lang}
-      />
-    </div>
+      {isEmojiPickerOpen ? (
+        <Suspense fallback={null}>
+          <LazyEmojiPickerModal
+            isOpen={isEmojiPickerOpen}
+            onSelect={(emoji) => {
+              setForm((prev) => ({ ...prev, emoji }));
+              toast.success(`${t.selectedEmoji}: ${emoji}`);
+            }}
+            onClose={() => setIsEmojiPickerOpen(false)}
+            t={t}
+            lang={lang}
+          />
+        </Suspense>
+      ) : null}
+    </AppPageShell>
   );
 };
 

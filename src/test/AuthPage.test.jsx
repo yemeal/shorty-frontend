@@ -165,9 +165,60 @@ describe("AuthPage — register tab", () => {
       expect(screen.getByPlaceholderText(/your_nickname|tvoy_nik/i)).toBeInTheDocument();
     });
   });
-});
 
-describe("AuthPage — tab switching", () => {
+  it("requires legal consent before creating an account", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      text: async () => JSON.stringify({ user: { id: 1, username: "myuser", email: "a@b.c" } }),
+    });
+
+    const { container } = renderWithProviders(<AuthPage defaultTab="register" />, { route: "/register" });
+    fireEvent.change(screen.getByPlaceholderText(/your_nickname|tvoy_nik/i), {
+      target: { value: "myuser" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+      target: { value: "a@b.c" },
+    });
+    fireEvent.change(container.querySelector("#auth-password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(container.querySelector("button[type='submit']"));
+
+    const consentCheckbox = await screen.findByRole("checkbox", {
+      name: /Privacy Policy|Terms|Политику|Пользовательское соглашение/i,
+    });
+
+    fireEvent.click(container.querySelector("button[type='submit']"));
+
+    await waitFor(() => {
+      expect(consentCheckbox).toHaveAttribute("aria-invalid", "true");
+    });
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/auth/register",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("renders Russian legal consent copy without mojibake", async () => {
+    localStorage.setItem("shorty-lang", "ru");
+
+    const { container } = renderWithProviders(<AuthPage defaultTab="register" />, { route: "/register" });
+    fireEvent.change(screen.getByPlaceholderText(/your_nickname|tvoy_nik/i), {
+      target: { value: "myuser" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+      target: { value: "a@b.c" },
+    });
+    fireEvent.change(container.querySelector("#auth-password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(container.querySelector("button[type='submit']"));
+
+    expect(await screen.findByText(/Я принимаю/i)).toBeInTheDocument();
+    expect(screen.getByText(/Пользовательское соглашение/i)).toBeInTheDocument();
+    expect(screen.getByText(/Политику обработки персональных данных/i)).toBeInTheDocument();
+  });
+
   it("switches from login to register", async () => {
     renderWithProviders(<AuthPage defaultTab="login" />, { route: "/login" });
     fireEvent.click(screen.getByText(/Sign up|Регистрация/i));
