@@ -1,89 +1,127 @@
-import React, { useEffect } from 'react';
-import Header from '../components/Header';
-import ShortenForm from '../features/shorten/ui/ShortenForm';
-import { Zap, CheckCircle2, Globe } from 'lucide-react';
-import PageHeaderReveal from '../components/PageHeaderReveal';
-import AppBackground from '../shared/ui/AppBackground';
-import { GLASS_HOVER_INTERACTIVE_CLASS } from '../lib/motionTokens';
-import { useLang } from '../LangContext';
+import React, { useMemo } from "react";
+import { CheckCircle2, Globe, Zap } from "lucide-react";
+import PageHeaderReveal from "../components/PageHeaderReveal";
+import ShortenForm from "../features/shorten/ui/ShortenForm";
+import { useLang } from "../LangContext";
+import { GLASS_HOVER_SURFACE_CLASS } from "../lib/motionTokens";
+import AppPageShell from "../shared/ui/AppPageShell";
 
-const GithubIcon = ({ size = 16, className = "" }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
-        <path d="M9 18c-4.51 2-5-2-7-2"/>
-    </svg>
-);
+const HOME_SECTIONS = {
+  hero: "home-hero",
+  features: "home-features",
+};
+const FEATURE_CARD_CLASS =
+  `glass-frost-surface group relative isolate list-none overflow-hidden rounded-[2rem] border border-white/30 dark:border-white/10 border-t-white/45 dark:border-t-white/12 bg-white/12 dark:bg-white/[0.03] p-8 shadow-[0_20px_40px_-18px_rgba(15,23,42,0.14)] dark:shadow-none ${GLASS_HOVER_SURFACE_CLASS}`;
+const FEATURE_ICON_CLASS =
+  "relative z-10 mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border shadow-sm transition-[transform,border-color,background-color,box-shadow] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-[1px] group-hover:scale-[1.04] motion-reduce:transform-none motion-reduce:transition-none";
 
 const HomePage = () => {
-    const { t } = useLang();
+  const { t } = useLang();
+  const featureCards = useMemo(
+    () => [
+      {
+        key: "speed",
+        title: t.feat1Title,
+        desc: t.feat1Desc,
+        icon: <Zap size={22} className="text-blue-500/80 dark:text-blue-300" />,
+        glowClassName:
+          "bg-gradient-to-br from-blue-500/18 via-blue-500/[0.04] to-transparent dark:from-blue-400/18 dark:via-blue-400/[0.05]",
+        iconClassName:
+          "border-blue-200/70 dark:border-blue-500/20 bg-blue-500/10 dark:bg-blue-500/14 shadow-[0_10px_24px_-18px_rgba(59,130,246,0.7)]",
+        titleHoverClassName: "group-hover:text-blue-950 dark:group-hover:text-white",
+      },
+      {
+        key: "reliability",
+        title: t.feat2Title,
+        desc: t.feat2Desc,
+        icon: <CheckCircle2 size={22} className="text-indigo-500/80 dark:text-indigo-300" />,
+        glowClassName:
+          "bg-gradient-to-br from-indigo-500/16 via-indigo-500/[0.05] to-transparent dark:from-indigo-400/18 dark:via-indigo-400/[0.05]",
+        iconClassName:
+          "border-indigo-200/70 dark:border-indigo-500/20 bg-indigo-500/10 dark:bg-indigo-500/14 shadow-[0_10px_24px_-18px_rgba(99,102,241,0.62)]",
+        titleHoverClassName: "group-hover:text-indigo-950 dark:group-hover:text-white",
+      },
+      {
+        key: "open-source",
+        title: t.feat3Title,
+        desc: t.feat3Desc,
+        icon: <Globe size={22} className="text-purple-500/80 dark:text-purple-300" />,
+        glowClassName:
+          "bg-gradient-to-br from-purple-500/16 via-purple-500/[0.04] to-transparent dark:from-purple-400/18 dark:via-purple-400/[0.05]",
+        iconClassName:
+          "border-purple-200/70 dark:border-purple-500/20 bg-purple-500/10 dark:bg-purple-500/14 shadow-[0_10px_24px_-18px_rgba(168,85,247,0.58)]",
+        titleHoverClassName: "group-hover:text-purple-950 dark:group-hover:text-white",
+      },
+    ],
+    [t],
+  );
 
-    useEffect(() => {
-        const handleScroll = () => {
-            // handleScroll logic can be implemented here if needed in the future
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+  return (
+    <AppPageShell mainClassName="w-full">
+      <div className="relative z-10 flex-1 w-full">
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-32 sm:pt-40 pb-12 flex flex-col items-center">
+          <section aria-labelledby={HOME_SECTIONS.hero} className="relative w-full">
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-full">
+              <div
+                aria-hidden="true"
+                className="mx-auto mt-6 h-[18rem] w-[24rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.34),rgba(59,130,246,0.18)_38%,rgba(0,0,0,0)_74%)] blur-3xl sm:mt-8 sm:h-[24rem] sm:w-[40rem]"
+              />
+            </div>
 
-    return (
-        <div className="min-h-screen text-slate-800 dark:text-slate-200 font-sans selection:bg-blue-500/30 relative overflow-hidden transition-colors duration-500">
-            <AppBackground />
+            <div className="relative z-10">
+              <PageHeaderReveal
+                title={
+                  <>
+                    {t.title1} <br />
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 drop-shadow-sm dark:drop-shadow-lg">
+                      {t.title2}
+                    </span>
+                  </>
+                }
+                subtitle={t.subtitle}
+                className="text-center space-y-4 sm:space-y-6 mb-10 sm:mb-14 relative z-10 w-full transition-colors duration-500"
+                titleClassName="type-display-hero text-4xl sm:text-5xl md:text-7xl text-slate-900 dark:text-white"
+                subtitleClassName="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto leading-relaxed px-4 transition-colors"
+                titleId={HOME_SECTIONS.hero}
+              />
+            </div>
 
-            <Header />
+            <div className="relative z-10">
+              <ShortenForm />
+            </div>
+          </section>
 
-            {/* Основной контент */}
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-32 sm:pt-40 pb-12 flex flex-col items-center">
-
-                <PageHeaderReveal
-                    title={
-                        <>
-                            {t.title1} <br />
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 drop-shadow-sm dark:drop-shadow-lg">
-                                {t.title2}
-                            </span>
-                        </>
-                    }
-                    subtitle={t.subtitle}
-                    className="text-center space-y-4 sm:space-y-6 mb-10 sm:mb-14 relative z-10 w-full transition-colors duration-500"
-                    titleClassName="font-display text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight"
-                    subtitleClassName="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto leading-relaxed px-4 transition-colors"
-                />
-
-                {/* Форма */}
-                <ShortenForm />
-
-                {/* Статистика / Фичи */}
-                <div className="grid md:grid-cols-3 gap-6 w-full max-w-4xl pt-12 border-t-2 border-slate-300/30 dark:border-white/5 relative z-10">
-                    {[
-                        { title: t.feat1Title, desc: t.feat1Desc, icon: <Zap size={22} className="text-blue-500/80 dark:text-blue-400" /> },
-                        { title: t.feat2Title, desc: t.feat2Desc, icon: <CheckCircle2 size={22} className="text-indigo-500/80 dark:text-indigo-400" /> },
-                        { title: t.feat3Title, desc: t.feat3Desc, icon: <Globe size={22} className="text-purple-500/80 dark:text-purple-400" /> }
-                    ].map((item, i) => (
-                        <div key={i} className={`group bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 p-8 rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none ${GLASS_HOVER_INTERACTIVE_CLASS}`}>
-                            <div className="bg-gradient-to-br from-white/10 to-transparent w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border border-white/40 dark:border-white/5 shadow-sm group-hover:scale-110 group-hover:rotate-[5deg] transition-all duration-500">
-                                {item.icon}
-                            </div>
-                            <h3 className="font-display font-bold text-slate-900 dark:text-white mb-3 text-xl tracking-tight transition-colors">{item.title}</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed transition-colors font-medium">{item.desc}</p>
-                        </div>
-                    ))}
-                </div>
-            </main>
-
-            <footer className="py-8 flex flex-col items-center justify-center gap-4 text-center text-slate-500 dark:text-slate-500 text-sm relative z-10 font-mono transition-colors">
-                <a
-                    href="https://github.com/yemeal/shorty"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-2xl border border-slate-200/60 dark:border-white/10 hover:bg-slate-200/50 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                >
-                    <GithubIcon size={16} />
-                    <span>GitHub</span>
-                </a>
-                <span>&copy; {new Date().getFullYear()} {t.footer}</span>
-            </footer>
+          <section
+            aria-labelledby={HOME_SECTIONS.features}
+            className="w-full max-w-4xl pt-8 sm:pt-10 border-t-2 border-slate-300/30 dark:border-white/5 relative z-10"
+          >
+            <h2 id={HOME_SECTIONS.features} className="sr-only">
+              Product highlights
+            </h2>
+            <ul className="grid md:grid-cols-3 gap-6 w-full">
+              {featureCards.map((item) => (
+                <li key={item.key} className={FEATURE_CARD_CLASS}>
+                  <div
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:opacity-100 motion-reduce:transition-none ${item.glowClassName}`}
+                  />
+                  <div className={`${FEATURE_ICON_CLASS} ${item.iconClassName}`}>{item.icon}</div>
+                  <h3
+                    className={`relative z-10 mb-3 type-display-title text-xl text-slate-900 transition-colors dark:text-white ${item.titleHoverClassName}`}
+                  >
+                    {item.title}
+                  </h3>
+                  <p className="relative z-10 text-sm font-medium leading-relaxed text-slate-500 transition-colors dark:text-slate-400">
+                    {item.desc}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
-    );
+      </div>
+    </AppPageShell>
+  );
 };
 
 export default HomePage;

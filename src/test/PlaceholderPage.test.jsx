@@ -238,7 +238,11 @@ describe("ProfilePage — shorties list", () => {
   it("shows page info in pagination bar", async () => {
     renderWithProviders(<ProfilePage />, { route: "/profile" });
     await waitFor(() => {
-      expect(screen.getByText(/Page 1 of 2|Страница 1 из 2/)).toBeInTheDocument();
+      const currentPageButton = screen
+        .getAllByRole("button")
+        .find((button) => button.getAttribute("aria-current") === "page");
+      expect(currentPageButton).toBeTruthy();
+      expect(currentPageButton).toHaveTextContent("1");
     });
   });
 
@@ -349,7 +353,12 @@ describe("ProfilePage — search", () => {
       target: { value: "spa" },
     });
     await waitFor(() => {
-      expect(screen.getByText(/Page 1 of 1|Страница 1 из 1/)).toBeInTheDocument();
+      const currentPageButton = screen
+        .getAllByRole("button")
+        .find((button) => button.getAttribute("aria-current") === "page");
+      expect(currentPageButton).toBeTruthy();
+      expect(currentPageButton).toHaveTextContent("1");
+      expect(screen.getAllByRole("article")).toHaveLength(2);
     });
   });
 });

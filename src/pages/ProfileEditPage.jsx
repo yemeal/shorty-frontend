@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import Header from "../components/Header";
-import AppBackground from "../shared/ui/AppBackground";
 import PageHeaderReveal from "../components/PageHeaderReveal";
 import { useAuth, AUTH_DEFAULT_EMOJI, normalizeUserFromServer } from "../AuthContext";
 import { useLang } from "../LangContext";
@@ -12,6 +10,7 @@ import BioSection from "../features/profile/ui/BioSection";
 import PreferencesSection from "../features/profile/ui/PreferencesSection";
 import ProfileEditActions from "../features/profile/ui/ProfileEditActions";
 import { apiFetch, apiPatchJson } from "../shared/lib/api";
+import AppPageShell from "../shared/ui/AppPageShell";
 
 const PROFILE_DRAFT_KEY = "shorty-profile-draft";
 
@@ -161,17 +160,13 @@ const ProfileEditPage = () => {
   }, [lang, navigate, setLang, setTheme, theme]);
 
   return (
-    <div className="min-h-screen text-slate-800 dark:text-slate-200 font-sans selection:bg-blue-500/30 relative overflow-hidden transition-colors duration-500">
-      <AppBackground />
-
-      <Header />
-
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 pt-28 sm:pt-36 pb-16 flex flex-col gap-5 sm:gap-6 relative z-10">
+    <AppPageShell mainClassName="w-full">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-28 sm:pt-36 pb-16 flex flex-col gap-5 sm:gap-6 relative z-10">
         <PageHeaderReveal
           title={t.profileEditTitle}
           subtitle={t.profileEditSubtitle}
           className="text-center space-y-2"
-          titleClassName="font-display text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white"
+          titleClassName="type-display-title text-3xl sm:text-5xl text-slate-900 dark:text-white"
           subtitleClassName="text-sm sm:text-base text-slate-600 dark:text-slate-400"
         />
 
@@ -205,8 +200,8 @@ const ProfileEditPage = () => {
           onCancel={handleCancel}
           t={t}
         />
-      </main>
-    </div>
+      </div>
+    </AppPageShell>
   );
 };
 

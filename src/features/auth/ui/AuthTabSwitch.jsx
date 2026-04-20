@@ -11,7 +11,7 @@ const AuthTabSwitch = ({ tab, onSwitch, t }) => (
       <button
         type="button"
         onClick={() => onSwitch("login")}
-        className="cursor-pointer relative py-3 rounded-2xl font-display font-bold text-sm sm:text-base"
+        className="cursor-pointer relative py-3 rounded-2xl type-display-cta text-sm sm:text-base"
       >
         {tab === "login" && (
           <Motion.div
@@ -30,7 +30,7 @@ const AuthTabSwitch = ({ tab, onSwitch, t }) => (
       <button
         type="button"
         onClick={() => onSwitch("register")}
-        className="cursor-pointer relative py-3 rounded-2xl font-display font-bold text-sm sm:text-base"
+        className="cursor-pointer relative py-3 rounded-2xl type-display-cta text-sm sm:text-base"
       >
         {tab === "register" && (
           <Motion.div

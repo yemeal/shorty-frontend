@@ -39,6 +39,7 @@ function storeUser(user) {
  * @param {Record<string, unknown>} raw - API user object (may include `profile`)
  * @param {Record<string, unknown> | null} [prevSnapshot] - previous stored user (same session) for emoji fallback
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function normalizeUserFromServer(raw, prevSnapshot = null) {
   if (!raw || typeof raw !== "object") return null;
   const profile = raw.profile;

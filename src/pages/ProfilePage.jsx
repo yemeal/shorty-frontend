@@ -1,15 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { QRCodeCanvas } from "qrcode.react";
 import { CheckCircle2, Copy, Download, ExternalLink, LogOut, PencilLine, QrCode, Trash2, UserCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import Header from "../components/Header";
 import { AUTH_DEFAULT_EMOJI, useAuth } from "../AuthContext";
 import { useLang } from "../LangContext";
 import { downloadCanvasAsJpg } from "../lib/downloadImage";
 import CardActions from "../components/CardActions";
-import AppBackground from "../shared/ui/AppBackground";
 import { copyTextToClipboard } from "../shared/lib/clipboard";
 import { buildPublicShortUrlAbsolute } from "../shared/lib/publicShortUrl";
 import ProfileHeroSection from "../features/profile/ui/ProfileHeroSection";
@@ -33,9 +31,10 @@ import {
 import { removeRecentLinkBySlug } from "../hooks/useRecentLinks";
 import { GlassSecondaryButton } from "../shared/ui/GlassSecondaryAction";
 import { ShortenStylePrimaryLink } from "../shared/ui/ShortenStylePrimaryLink";
+import AppPageShell from "../shared/ui/AppPageShell";
 
 const BTN_GO =
-  "flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]";
+  "flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-[background-color,box-shadow,transform] duration-200 shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]";
 
 /** Subtle blue / purple only near top-left and bottom-right; center stays neutral. */
 function ProfileListPanelCornerGlow() {
@@ -57,7 +56,8 @@ const DELETE_REFETCH_DELAY_MS = 480;
 
 const ProfilePage = () => {
   const { user, logout } = useAuth();
-  const { t } = useLang();
+  const { lang, t } = useLang();
+  const prefersReducedMotion = useReducedMotion();
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get("q") || "");
   const [debouncedQuery, setDebouncedQuery] = useState(() => (searchParams.get("q") || "").trim());
@@ -77,6 +77,7 @@ const ProfilePage = () => {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [deletingIds, setDeletingIds] = useState(new Set());
+  const [listTransitionDirection, setListTransitionDirection] = useState(0);
 
   const profileEmoji = user?.emoji || AUTH_DEFAULT_EMOJI;
   const safePage = Number.isFinite(page) && page > 0 ? page : 1;
@@ -111,6 +112,7 @@ const ProfilePage = () => {
     }
     if (prevDebouncedPageSizeRef.current !== debouncedPageSize) {
       prevDebouncedPageSizeRef.current = debouncedPageSize;
+      setListTransitionDirection(0);
       setPage(1);
     }
   }, [debouncedPageSize]);
@@ -139,6 +141,7 @@ const ProfilePage = () => {
           nextPage = 1;
         }
         if (nextPage !== safePage) {
+          setListTransitionDirection(0);
           setPage(nextPage);
           return;
         }
@@ -200,6 +203,39 @@ const ProfilePage = () => {
       totalPages: Math.max(1, meta.total_pages || 1),
     };
   }, [listMeta, shorties.length, safePage]);
+  const listViewportKey = `${isLoadingShorties ? "loading" : listError ? "error" : shorties.length === 0 ? "empty" : "ready"}-${currentPage}-${debouncedQuery}-${sort}-${debouncedPageSize}`;
+  const listTransitionVariants = prefersReducedMotion
+    ? {
+        initial: { opacity: 1, x: 0 },
+        animate: { opacity: 1, x: 0 },
+        exit: { opacity: 1, x: 0 },
+      }
+    : {
+        initial: (direction) => ({
+          opacity: 0,
+          x: direction === 0 ? 0 : direction * 18,
+        }),
+        animate: {
+          opacity: 1,
+          x: 0,
+          transition: { duration: 0.34, ease: MOTION_EASE_OUT_SMOOTH },
+        },
+        exit: (direction) => ({
+          opacity: 0,
+          x: direction === 0 ? 0 : direction * -18,
+          transition: { duration: 0.24, ease: MOTION_EASE_OUT_SMOOTH },
+        }),
+      };
+
+  const createdAtFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(lang === "ru" ? "ru-RU" : "en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
+    [lang],
+  );
 
   const copy = async (value, itemId) => {
     try {
@@ -247,12 +283,8 @@ const ProfilePage = () => {
   const openAbsolute = (slug) => buildPublicShortUrlAbsolute(slug);
 
   return (
-    <div className="min-h-screen text-slate-800 dark:text-slate-200 font-sans selection:bg-blue-500/30 relative overflow-hidden transition-colors duration-500">
-      <AppBackground />
-
-      <Header />
-
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 sm:pt-40 pb-16 relative z-10">
+    <AppPageShell mainClassName="w-full">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 sm:pt-40 pb-16 relative z-10">
         <div>
           <ProfileHeroSection
             t={t}
@@ -269,12 +301,17 @@ const ProfilePage = () => {
               sort={sort}
               query={query}
               pageSize={pageSize}
-              onPageSizeChange={setPageSize}
+              onPageSizeChange={(nextPageSize) => {
+                setListTransitionDirection(0);
+                setPageSize(nextPageSize);
+              }}
               onSortChange={(nextSort) => {
+                setListTransitionDirection(0);
                 setPage(1);
                 setSort(nextSort);
               }}
               onQueryChange={(e) => {
+                setListTransitionDirection(0);
                 setPage(1);
                 setQuery(e.target.value);
               }}
@@ -286,13 +323,31 @@ const ProfilePage = () => {
               transition={{ layout: { duration: 0.42, ease: MOTION_EASE_OUT_SMOOTH } }}
               className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-[40px] transform-gpu border border-white/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-3xl p-4 sm:p-6 relative overflow-hidden transition-[box-shadow] duration-300"
             >
-              <div className="mb-3">
-                <span className="inline-flex items-center rounded-xl border border-white/55 dark:border-white/10 bg-white/35 dark:bg-black/20 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  {shownFrom}-{shownTo} {t.paginationOf} {totalForBadge}
-                </span>
+              <div className="mb-3 h-7">
+                <AnimatePresence mode="wait" initial={false}>
+                  <MotionDiv
+                    key={`${shownFrom}-${shownTo}-${totalForBadge}`}
+                    initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 4, scale: 0.985 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: -4, scale: 0.985 }}
+                    transition={{ duration: 0.26, ease: MOTION_EASE_OUT_SMOOTH }}
+                    className="inline-flex items-center rounded-xl border border-white/55 dark:border-white/10 bg-white/35 dark:bg-black/20 px-3 py-1 text-xs type-ui-label text-slate-600 dark:text-slate-300 shadow-[0_10px_22px_-18px_rgba(59,130,246,0.45)]"
+                  >
+                    {shownFrom}-{shownTo} {t.paginationOf} {totalForBadge}
+                  </MotionDiv>
+                </AnimatePresence>
               </div>
 
-              <div className="space-y-3 relative z-10">
+              <AnimatePresence mode="wait" initial={false} custom={listTransitionDirection}>
+                <MotionDiv
+                  key={listViewportKey}
+                  custom={listTransitionDirection}
+                  variants={listTransitionVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="space-y-3 relative z-10"
+                >
                 {listError && !isLoadingShorties ? (
                   <div className="relative overflow-hidden rounded-2xl border border-solid border-slate-300/80 dark:border-dashed dark:border-white/10 bg-slate-100/90 dark:bg-white/5 shadow-sm dark:shadow-none py-10 text-center">
                     <ProfileListPanelCornerGlow />
@@ -331,6 +386,7 @@ const ProfilePage = () => {
                         <GlassSecondaryButton
                           variant="compact"
                           onClick={() => {
+                            setListTransitionDirection(0);
                             setQuery("");
                             setSort("newest");
                             setPage(1);
@@ -359,13 +415,17 @@ const ProfilePage = () => {
                             : "overflow-visible grid-rows-[1fr] max-w-full opacity-100 scale-100"
                         }`}
                       >
-                        <article className={`min-h-0 bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-2xl p-3 sm:p-4 hover:bg-white/25 dark:hover:bg-white/10 shadow-md ${GLASS_HOVER_INTERACTIVE_CLASS}`}>
+                        <article className={`min-h-0 bg-white/15 dark:bg-white/5 backdrop-blur-[25px] border border-white/20 dark:border-white/10 rounded-2xl p-4 sm:p-4 hover:bg-white/25 dark:hover:bg-white/10 shadow-md ${GLASS_HOVER_INTERACTIVE_CLASS}`}>
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                           <div className="min-w-0 flex flex-col overflow-hidden">
-                            <span className="text-blue-600 dark:text-blue-400 font-mono text-xs sm:text-base font-bold truncate">{item.short}</span>
-                            <span className="text-slate-500 dark:text-slate-400 text-xs truncate max-w-[280px] sm:max-w-md">{item.original}</span>
-                            <span className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                              {t.shortiesClicks}: {item.clicks} · {new Date(item.createdAt).toLocaleDateString()}
+                            <span className="type-tech-strong text-blue-600 dark:text-blue-400 text-sm sm:text-base leading-snug truncate">
+                              {item.short}
+                            </span>
+                            <span className="text-slate-500 dark:text-slate-400 text-sm leading-snug truncate max-w-[320px] sm:max-w-md">
+                              {item.original}
+                            </span>
+                            <span className="type-ui-meta text-sm text-slate-400 dark:text-slate-500 mt-1">
+                              {t.shortiesClicks}: {item.clicks} · {createdAtFormatter.format(new Date(item.createdAt))}
                             </span>
                           </div>
                           <CardActions
@@ -462,7 +522,8 @@ const ProfilePage = () => {
                     );
                   })
                 )}
-              </div>
+                </MotionDiv>
+              </AnimatePresence>
             </MotionDiv>
           </div>
 
@@ -474,25 +535,26 @@ const ProfilePage = () => {
                 totalPages={totalPages}
                 hasPreviousPage={listMeta.has_previous_page}
                 hasNextPage={listMeta.has_next_page}
-                onPageChange={(p) => setPage(p)}
+                onPageChange={(p) => {
+                  setListTransitionDirection(p > currentPage ? 1 : -1);
+                  setPage(p);
+                }}
               />
-              <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 tabular-nums">
-                {t.paginationPage} {currentPage} {t.paginationOf} {totalPages}
-              </p>
             </div>
           )}
 
           <div className="mt-8 flex justify-center">
             <button
+              type="button"
               onClick={() => setIsLogoutConfirmOpen(true)}
-              className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-base font-display font-bold border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/35 transition text-red-500"
+              className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-base type-display-cta border border-white/50 dark:border-white/10 bg-white/35 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/35 transition-[background-color,border-color,box-shadow,color] duration-200 text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/35"
             >
               <LogOut size={16} />
               {t.signOut}
             </button>
           </div>
         </div>
-      </main>
+      </div>
 
       <AnimatePresence>
         {isLogoutConfirmOpen && (
@@ -509,7 +571,7 @@ const ProfilePage = () => {
               transition={{ duration: 0.22 }}
               className="w-full max-w-md rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-[30px] border border-white/50 dark:border-white/10 shadow-2xl p-6 text-center"
             >
-              <p className="font-display text-xl font-black text-slate-900 dark:text-white">
+              <p className="type-display-title text-xl text-slate-900 dark:text-white">
                 {t.logoutConfirmTitle}
               </p>
               <div className="mt-5 flex items-center justify-center gap-3">
@@ -549,7 +611,7 @@ const ProfilePage = () => {
               transition={{ duration: 0.22 }}
               className="w-full max-w-md rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-[30px] border border-white/50 dark:border-white/10 shadow-2xl p-6 text-center"
             >
-              <p className="font-display text-xl font-black text-slate-900 dark:text-white">
+              <p className="type-display-title text-xl text-slate-900 dark:text-white">
                 {t.deleteConfirmTitle}
               </p>
               <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -577,7 +639,7 @@ const ProfilePage = () => {
           </MotionDiv>
         )}
       </AnimatePresence>
-    </div>
+    </AppPageShell>
   );
 };
 

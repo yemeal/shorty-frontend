@@ -12,8 +12,11 @@ const MOVE_THRESHOLD_PX = 14;
 export function useDismissOnOutsidePress({ active, rootRefs, onDismiss }) {
   const onDismissRef = useRef(onDismiss);
   const rootsRef = useRef(rootRefs);
-  onDismissRef.current = onDismiss;
-  rootsRef.current = rootRefs;
+
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+    rootsRef.current = rootRefs;
+  }, [onDismiss, rootRefs]);
 
   useEffect(() => {
     if (!active) return;

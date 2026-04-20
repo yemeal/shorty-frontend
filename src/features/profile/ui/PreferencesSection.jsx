@@ -44,7 +44,7 @@ const PreferencesSection = ({
       <div className="relative z-10 space-y-6">
         {/* Theme */}
         <div>
-          <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-3">
+          <p className="type-ui-label text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400 mb-3">
             {t.profileEditThemeLabel}
           </p>
           <SegmentedPill
@@ -57,7 +57,7 @@ const PreferencesSection = ({
 
         {/* Language */}
         <div>
-          <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-3">
+          <p className="type-ui-label text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400 mb-3">
             {t.profileEditLangLabel}
           </p>
           <SegmentedPill
@@ -71,7 +71,7 @@ const PreferencesSection = ({
 
         {/* Timezone (read-only) */}
         <div>
-          <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-3">
+          <p className="type-ui-label text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400 mb-3">
             {t.profileEditTimezoneLabel}
           </p>
           <div className="flex items-center gap-3 rounded-2xl border border-white/40 dark:border-white/10 bg-white/30 dark:bg-black/20 px-4 py-3">
@@ -79,7 +79,7 @@ const PreferencesSection = ({
               <Globe size={16} className="text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-mono text-sm text-slate-800 dark:text-white truncate">
+              <span className="type-tech-strong text-sm text-slate-800 dark:text-white truncate">
                 {timezone || "—"}
               </span>
               <span className="text-xs text-slate-400 dark:text-slate-500">

@@ -1,12 +1,116 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Unbounded:wght@500;700;800&display=swap');
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --font-display: 'Montserrat', sans-serif;
+  --font-sans: 'Onest', sans-serif;
+  --font-mono: 'Onest', sans-serif;
+  --font-display: 'Unbounded', sans-serif;
+  --font-emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
+}
+
+:root {
+  --type-track-display-hero: -0.06em;
+  --type-track-display-tight: -0.045em;
+  --type-track-display-cta: -0.03em;
+  --type-track-ui-tight: -0.03em;
+  --type-track-ui-label: -0.02em;
+  --type-track-input: -0.015em;
+  --type-track-tech: 0.005em;
+  --type-track-tech-label: 0.08em;
+}
+
+.type-brand-mark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: var(--type-track-display-tight);
+  line-height: 0.98;
+}
+
+.type-display-hero {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: var(--type-track-display-hero);
+  line-height: 0.95;
+}
+
+.type-display-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: var(--type-track-display-tight);
+  line-height: 1;
+}
+
+.type-display-cta {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: var(--type-track-display-cta);
+  line-height: 1;
+}
+
+.type-ui-title {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: var(--type-track-ui-tight);
+  line-height: 1.05;
+}
+
+.type-ui-label {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: var(--type-track-ui-label);
+  line-height: 1.15;
+}
+
+.type-ui-input {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: var(--type-track-input);
+}
+
+.type-ui-meta {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: var(--type-track-input);
+  line-height: 1.18;
+  font-variant-numeric: tabular-nums;
+}
+
+.type-tech {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: var(--type-track-tech);
+  line-height: 1.18;
+  font-variant-numeric: tabular-nums;
+}
+
+.type-tech-strong {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.type-tech-label {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: var(--type-track-tech-label);
+  text-transform: uppercase;
+  line-height: 1.12;
+  font-variant-numeric: tabular-nums;
+}
+
+.type-emoji {
+  font-family: var(--font-emoji);
+  font-variant-emoji: emoji;
+  line-height: 1;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
 }
 
 html {
@@ -203,6 +307,47 @@ html.dark .glass-panel.glass-panel--menu {
 
 .glass-panel.glass-panel--menu::before {
   border-radius: inherit;
+}
+
+.glass-frost-surface {
+  position: relative;
+  isolation: isolate;
+}
+
+.glass-frost-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.07) 100%);
+  backdrop-filter: blur(40px);
+  will-change: backdrop-filter;
+  pointer-events: none;
+}
+
+@supports ((backdrop-filter: blur(0)) or (-webkit-backdrop-filter: blur(0))) {
+  .glass-frost-surface::before {
+    -webkit-backdrop-filter: blur(40px);
+    backdrop-filter: blur(40px);
+  }
+}
+
+.glass-frost-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+html.dark .glass-frost-surface::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+}
+
+html.dark .glass-frost-surface::after {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .glass-input {

@@ -9,7 +9,7 @@ const BrandLoader = ({ label = "Loading..." }) => {
           <img src="/icon.svg" alt="loading" className="w-4 h-4 object-contain" />
         </span>
       </span>
-      <span className="text-sm font-display font-semibold text-slate-700 dark:text-slate-200">{label}</span>
+      <span className="text-sm type-ui-label text-slate-700 dark:text-slate-200">{label}</span>
     </div>
   );
 };

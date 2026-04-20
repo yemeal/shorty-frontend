@@ -27,7 +27,7 @@ const ProfileEditActions = ({ isDirty, isLoading, onSave, t }) => {
           whileHover={isDirty ? { scale: 1.02 } : undefined}
           disabled={!isDirty || isLoading}
           onClick={onSave}
-          className="order-1 sm:order-2 w-full sm:w-auto cursor-pointer bg-blue-500/15 dark:bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 dark:border-blue-400/40 border-t-blue-400/20 dark:border-t-white/20 text-blue-600 dark:text-white font-display font-black text-base px-5 py-3 sm:h-12 rounded-2xl transition-all flex items-center justify-center gap-2 group/btn active:scale-[0.97] shrink-0 shadow-xl dark:shadow-[0_0_25px_rgba(37,99,235,0.15)] overflow-hidden relative disabled:opacity-50 disabled:cursor-not-allowed"
+          className="order-1 sm:order-2 w-full sm:w-auto cursor-pointer bg-blue-500/15 dark:bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 dark:border-blue-400/40 border-t-blue-400/20 dark:border-t-white/20 text-blue-600 dark:text-white type-display-cta text-base px-5 py-3 sm:h-12 rounded-2xl transition-all flex items-center justify-center gap-2 group/btn active:scale-[0.97] shrink-0 shadow-xl dark:shadow-[0_0_25px_rgba(37,99,235,0.15)] overflow-hidden relative disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>

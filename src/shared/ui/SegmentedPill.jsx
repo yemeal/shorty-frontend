@@ -25,7 +25,7 @@ const SegmentedPill = ({ options, value, onChange, layoutId, className = "" }) =
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
-          className="cursor-pointer relative py-2.5 rounded-xl font-display font-bold text-sm"
+          className="cursor-pointer relative py-2.5 rounded-xl type-display-cta text-sm"
         >
           {value === opt.value && (
             <Motion.div

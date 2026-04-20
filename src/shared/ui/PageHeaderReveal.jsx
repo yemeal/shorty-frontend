@@ -10,6 +10,7 @@ const PageHeaderReveal = ({
   title,
   subtitle,
   className = "",
+  titleId,
   titleClassName = "",
   subtitleClassName = "",
 }) => {
@@ -60,7 +61,7 @@ const PageHeaderReveal = ({
       animate="show"
       className={className}
     >
-      <Motion.h1 variants={titleVariants} className={titleClassName}>
+      <Motion.h1 id={titleId} variants={titleVariants} className={titleClassName}>
         {title}
       </Motion.h1>
       {subtitle ? (

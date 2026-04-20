@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, memo } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useRef, useState, memo } from 'react';
 import { Link2, Copy, CheckCircle2, Loader2, ArrowRight, ExternalLink, QrCode, Download, Trash2 } from 'lucide-react';
 import { useLang } from '../LangContext';
 import { useRecentLinks } from '../hooks/useRecentLinks';
@@ -19,11 +19,14 @@ import { buildPublicShortUrlDisplay } from '../shared/lib/publicShortUrl';
 import { validateSlug } from '../features/shorten/model/slug';
 
 const DRAFT_STORAGE_KEY = 'shorty-shorten-draft';
-const SHORTEN_INPUT_CLASS =
-    "flex-1 w-full bg-transparent py-3 focus:outline-none font-mono text-base tracking-[0.01em] placeholder:font-mono placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-white";
+const HUMAN_INPUT_CLASS =
+    "type-ui-input flex-1 w-full bg-transparent py-3 focus:outline-none text-base placeholder:font-sans placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-white";
+
+const TECH_INPUT_CLASS =
+    "type-tech flex-1 w-full bg-transparent py-3 focus:outline-none text-base placeholder:font-sans placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-white";
 
 const BTN_GO =
-    "flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]";
+    "flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-[background-color,box-shadow,transform] duration-200 shadow-[0_4px_10px_rgba(37,99,235,0.2)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]";
 
 const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
     const [isCopied, setIsCopied] = useState(false);
@@ -56,7 +59,7 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
         >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                 <div className="flex flex-col overflow-hidden">
-                    <span className="text-blue-600 dark:text-blue-400 font-mono text-xs sm:text-base font-bold truncate">
+                    <span className="type-tech-strong text-blue-600 dark:text-blue-400 text-xs sm:text-base truncate">
                         {link.shortUrl}
                     </span>
                     <span className="text-slate-500 dark:text-slate-400 text-xs truncate max-w-[280px] sm:max-w-md">
@@ -132,7 +135,7 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
                                     const ok = downloadCanvasAsJpg(qrCanvasId, `shorty-qr-${idx}.jpg`, { quality: 0.96, scale: 4 });
                                     if (!ok) toast.error(t.qrDownloadError);
                                 }}
-                                className="flex items-center gap-2 cursor-pointer text-xs font-mono font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                                className="flex items-center gap-2 cursor-pointer text-xs type-ui-label text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                             >
                                 <Download size={14} />
                                 {t.downloadQRBtn}
@@ -149,23 +152,25 @@ const RecentLinkItem = memo(({ link, t, idx, isQrOpen, onToggleQr }) => {
  * «Капля» только при первом появлении блока успеха; при смене ссылки (skipEntrance) оболочка остаётся раскрытой.
  */
 const SuccessResultDropletShell = ({ prefersReducedMotion, skipEntrance, children }) => {
-    const [open, setOpen] = useState(() => Boolean(skipEntrance || prefersReducedMotion));
+    const [hasAnimatedOpen, setHasAnimatedOpen] = useState(() =>
+        Boolean(skipEntrance || prefersReducedMotion),
+    );
 
     useLayoutEffect(() => {
-        if (skipEntrance || prefersReducedMotion) {
-            setOpen(true);
+        if (skipEntrance || prefersReducedMotion || hasAnimatedOpen) {
             return undefined;
         }
-        setOpen(false);
         let innerId;
         const outerId = requestAnimationFrame(() => {
-            innerId = requestAnimationFrame(() => setOpen(true));
+            innerId = requestAnimationFrame(() => setHasAnimatedOpen(true));
         });
         return () => {
             cancelAnimationFrame(outerId);
             if (innerId != null) cancelAnimationFrame(innerId);
         };
-    }, [prefersReducedMotion, skipEntrance]);
+    }, [hasAnimatedOpen, prefersReducedMotion, skipEntrance]);
+
+    const open = skipEntrance || prefersReducedMotion || hasAnimatedOpen;
 
     return (
         <div
@@ -186,6 +191,9 @@ const SuccessResultDropletShell = ({ prefersReducedMotion, skipEntrance, childre
 const ShortenForm = () => {
     const { t } = useLang();
     const prefersReducedMotion = useReducedMotion();
+    const longUrlFieldId = useId();
+    const customSlugFieldId = useId();
+    const customSlugPanelId = useId();
     const formShellVariants = prefersReducedMotion
         ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
         : {
@@ -370,11 +378,13 @@ const ShortenForm = () => {
     };
 
     const handleCustomSlugToggle = () => {
-        if (isCustomSlug) {
-            setCustomSlug('');
-            customSlugInputRef.current?.blur();
-        }
-        setIsCustomSlug(!isCustomSlug);
+        setIsCustomSlug((prev) => {
+            if (prev) {
+                setCustomSlug('');
+                customSlugInputRef.current?.blur();
+            }
+            return !prev;
+        });
     };
 
     return (
@@ -396,7 +406,7 @@ const ShortenForm = () => {
                     className="flex flex-col relative z-10"
                 >
 
-                    <div className={`flex flex-col sm:flex-row items-center gap-3 sm:gap-2 bg-white/20 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border transition-all shadow-[inset_0_2px_12px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_10px_0_rgba(255,255,255,0.05)] mb-8 ${
+                    <div className={`flex flex-col sm:flex-row items-center gap-3 sm:gap-2 bg-white/20 dark:bg-black/30 backdrop-blur-[30px] rounded-3xl p-2 border transition-[background-color,border-color,box-shadow] duration-200 shadow-[inset_0_2px_12px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_2px_10px_0_rgba(255,255,255,0.05)] mb-8 ${
                         errorField === 'long_url' 
                         ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] bg-red-500/5' 
                         : 'border-white/30 dark:border-white/10 border-t-white/40 dark:border-t-white/10 focus-within:border-blue-400 dark:focus-within:border-blue-500/30'
@@ -404,12 +414,18 @@ const ShortenForm = () => {
                         <div className="flex w-full sm:w-auto items-center flex-1 gap-2 sm:gap-4 pl-4 sm:pl-8 py-2 sm:py-0">
                             <Link2 size={22} className={`${errorField === 'long_url' ? 'text-red-400' : 'text-blue-500'} opacity-90 shrink-0`} />
                             <input
+                                id={longUrlFieldId}
+                                name="long_url"
                                 ref={mainInputRef}
                                 type="url"
                                 placeholder={t.placeholder}
                                 aria-label={t.placeholder}
-                                className={SHORTEN_INPUT_CLASS}
+                                className={HUMAN_INPUT_CLASS}
                                 value={longUrl}
+                                inputMode="url"
+                                autoCapitalize="none"
+                                autoCorrect="off"
+                                spellCheck={false}
                                 onChange={(e) => {
                                     setLongUrl(e.target.value);
                                     if(errorField === 'long_url') setErrorField(null);
@@ -417,11 +433,11 @@ const ShortenForm = () => {
                             />
                         </div>
                         <Motion.button
-                            whileTap={{ scale: 0.96 }}
-                            whileHover={{ scale: 1.02 }}
+                            whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
+                            whileHover={prefersReducedMotion ? undefined : { scale: 1.02 }}
                             disabled={isLoading}
                             aria-label={t.shortenBtn}
-                            className="w-full sm:w-auto cursor-pointer bg-blue-500/15 dark:bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 dark:border-blue-400/40 border-t-blue-400/20 dark:border-t-white/20 text-blue-600 dark:text-white font-display font-black px-8 py-4 sm:py-0 sm:h-14 rounded-3xl sm:rounded-full transition-all flex items-center justify-center gap-2 group/btn active:scale-[0.97] shrink-0 shadow-xl dark:shadow-[0_0_25px_rgba(37,99,235,0.15)] overflow-hidden relative"
+                            className="w-full sm:w-auto cursor-pointer bg-blue-500/15 dark:bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 dark:border-blue-400/40 border-t-blue-400/20 dark:border-t-white/20 text-blue-600 dark:text-white type-display-cta px-8 py-4 sm:py-0 sm:h-14 rounded-3xl sm:rounded-full transition-[background-color,border-color,box-shadow,transform,opacity] duration-200 flex items-center justify-center gap-2 group/btn active:scale-[0.97] shrink-0 shadow-xl dark:shadow-[0_0_25px_rgba(37,99,235,0.15)] overflow-hidden relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/35"
                         >
                             {isLoading ? (
                                 <Motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
@@ -435,31 +451,37 @@ const ShortenForm = () => {
                             )}
 
                             {/* Slow Liquid Shimmer Reflection - Brand Gradient Color */}
-                            <Motion.div
-                                className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/40 via-indigo-500/50 via-purple-400/40 to-transparent -skew-x-[20deg] blur-md"
-                                animate={{
-                                    x: ['-100%', '200%']
-                                }}
-                                transition={{
-                                    repeat: Infinity,
-                                    duration: 6,
-                                    ease: "linear",
-                                    repeatDelay: 0.5
-                                }}
-                            />
+                            {prefersReducedMotion ? null : (
+                                <Motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/40 via-indigo-500/50 via-purple-400/40 to-transparent -skew-x-[20deg] blur-md"
+                                    animate={{
+                                        x: ['-100%', '200%']
+                                    }}
+                                    transition={{
+                                        repeat: Infinity,
+                                        duration: 6,
+                                        ease: "linear",
+                                        repeatDelay: 0.5
+                                    }}
+                                />
+                            )}
                         </Motion.button>
                     </div>
 
-                    {/* Checkbox for custom link */}
                     <div className="flex items-center justify-end w-full px-4 gap-3 mb-2">
-                        <span id="custom-slug-label" className="text-xs sm:text-sm font-mono tracking-[0.01em] text-slate-600 dark:text-slate-400 font-medium cursor-pointer select-none transition-colors" onClick={handleCustomSlugToggle}>
+                        <button
+                            type="button"
+                            className="text-xs sm:text-sm type-ui-label text-slate-600 dark:text-slate-400 cursor-pointer select-none transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/35"
+                            onClick={handleCustomSlugToggle}
+                        >
                             {t.customSlugLabel}
-                        </span>
+                        </button>
                         <Motion.button
                             whileTap={{ scale: 0.92 }}
                             type="button"
                             onClick={handleCustomSlugToggle}
-                            aria-labelledby="custom-slug-label"
+                            aria-controls={customSlugPanelId}
+                            aria-label={t.customSlugLabel}
                             aria-pressed={isCustomSlug}
                             className={`w-11 h-6 cursor-pointer rounded-full relative transition-colors duration-300 focus:outline-none ${isCustomSlug ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-700'}`}
                         >
@@ -469,6 +491,7 @@ const ShortenForm = () => {
 
                     {/* Custom Slug Input — только grid-rows (без opacity), иначе мерцание фона; без transition-all на строке */}
                     <div
+                        id={customSlugPanelId}
                         className={`grid transition-[grid-template-rows] duration-[420ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
                             isCustomSlug ? "grid-rows-[1fr]" : "grid-rows-[0fr] pointer-events-none"
                         }`}
@@ -483,16 +506,21 @@ const ShortenForm = () => {
                                             : 'border-white/20 dark:border-white/5 border-t-white/30'
                                     }`}
                                 >
-                                    <span className="text-slate-400 dark:text-slate-500 pl-4 font-mono select-none">шорти.рф/</span>
+                                    <span className="type-tech text-slate-400 dark:text-slate-500 pl-4 select-none">шорти.рф/</span>
                                     <input
+                                        id={customSlugFieldId}
+                                        name="custom_slug"
                                         ref={customSlugInputRef}
                                         type="text"
                                         maxLength="30"
                                         tabIndex={isCustomSlug ? 0 : -1}
                                         aria-label={t.customSlugLabel}
                                         placeholder={t.customSlugPlaceholder}
-                                        className={SHORTEN_INPUT_CLASS}
+                                        className={TECH_INPUT_CLASS}
                                         value={customSlug}
+                                        autoCapitalize="none"
+                                        autoCorrect="off"
+                                        spellCheck={false}
                                         onChange={(e) => {
                                             setCustomSlug(e.target.value);
                                             if(errorField === 'slug') setErrorField(null);
@@ -523,8 +551,10 @@ const ShortenForm = () => {
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 opacity-50" />
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-8">
                                         <div className="flex flex-col w-full overflow-hidden">
-                                            <span className="text-xs font-mono tracking-[0.01em] text-slate-500 dark:text-slate-400 font-medium mb-1">{t.success}</span>
-                                            <span className="text-blue-600 dark:text-blue-300 font-mono text-xl truncate selection:bg-blue-200 dark:selection:bg-blue-400/20">
+                                            <span className="type-ui-input text-xs font-medium uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 mb-1">
+                                                {t.success}
+                                            </span>
+                                            <span className="type-tech-strong text-blue-600 dark:text-blue-300 text-xl truncate selection:bg-blue-200 dark:selection:bg-blue-400/20">
                                                 {shortUrl}
                                             </span>
                                         </div>
@@ -597,7 +627,7 @@ const ShortenForm = () => {
                                                             const ok = downloadCanvasAsJpg("qr-code-canvas-main", "shorty-qr.jpg", { quality: 0.96, scale: 4 });
                                                             if (!ok) toast.error(t.qrDownloadError);
                                                         }}
-                                                        className="flex items-center gap-2 cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                                                        className="flex items-center gap-2 cursor-pointer text-sm type-ui-label text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                                                     >
                                                         <Download size={16} />
                                                         {t.downloadQRBtn}
@@ -680,7 +710,7 @@ const ShortenForm = () => {
                                     >
                                         <div className="px-1 sm:px-6 pt-4 pb-3">
                                         <div className="flex items-center justify-between mb-4 px-2">
-                                            <span className="text-xs font-mono tracking-[0.01em] font-medium text-slate-400">
+                                            <span className="type-ui-input text-xs font-medium text-slate-400">
                                                 {t.fiveLastLinks}
                                             </span>
                                             <Motion.button

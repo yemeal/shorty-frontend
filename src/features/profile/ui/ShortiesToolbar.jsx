@@ -78,7 +78,7 @@ const ShortiesToolbar = ({
   const sortOpen = openMenu === "sort";
   const pageSizeOpen = openMenu === "pageSize";
 
-  const pageSizeLabel = useMemo(
+  const pageSizeAriaLabel = useMemo(
     () => t.shortiesPerPageButton.replace("{n}", String(pageSize)),
     [t.shortiesPerPageButton, pageSize],
   );
@@ -114,7 +114,7 @@ const ShortiesToolbar = ({
   return (
     <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5">
       <div className="space-y-3 w-full md:max-w-xl min-w-0">
-        <h2 className="font-display text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+        <h2 className="type-display-title text-3xl sm:text-4xl text-slate-900 dark:text-white">
           {t.shortiesTitle}
         </h2>
 
@@ -192,13 +192,18 @@ const ShortiesToolbar = ({
                 aria-expanded={pageSizeOpen}
                 aria-controls={pageSizePanelId}
                 aria-haspopup="dialog"
-                aria-label={pageSizeLabel}
+                aria-label={pageSizeAriaLabel}
                 title={t.shortiesPerPageTooltip}
                 className={`${TRIGGER_SHELL_PAGE_SIZE} ${pageSizeOpen ? TRIGGER_OPEN : TRIGGER_IDLE}`}
                 onClick={() => togglePageSize()}
               >
                 <Hash size={14} className={ICON_ABS} aria-hidden />
-                <span className="min-w-0 flex-1 truncate pr-1">{pageSizeLabel}</span>
+                <span className="flex min-w-0 flex-1 items-center justify-between gap-2 pr-1">
+                  <span className="truncate">{t.shortiesPerPage}</span>
+                  <span className="type-tech-strong shrink-0 text-sm text-slate-900 dark:text-white">
+                    {pageSize}
+                  </span>
+                </span>
                 <ChevronDown
                   size={16}
                   className={`${CHEVRON_ABS} ${pageSizeOpen ? "rotate-180 text-blue-600 dark:text-blue-400" : ""}`}
@@ -258,7 +263,7 @@ const ShortiesToolbar = ({
           value={query}
           onChange={onQueryChange}
           placeholder={t.shortiesSearch}
-          className="w-full h-11 rounded-xl border border-white/55 dark:border-white/10 bg-white/35 dark:bg-black/20 px-4 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition"
+          className="type-ui-input w-full h-11 rounded-xl border border-white/55 dark:border-white/10 bg-white/35 dark:bg-black/20 px-4 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition"
         />
       </label>
     </div>
