@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import EmojiPickerModal from "../shared/ui/EmojiPickerModal";
 import { EMOJI_CATEGORIES } from "../shared/config/emojiData";
@@ -61,7 +61,7 @@ describe("EmojiPickerModal", () => {
 
   it("calls onClose when escape is pressed or close button clicked", async () => {
     const onCloseMock = vi.fn();
-    const { container } = render(
+    render(
       <EmojiPickerModal isOpen={true} onSelect={() => {}} onClose={onCloseMock} t={defaultI18n} />
     );
     
@@ -97,9 +97,31 @@ describe("EmojiPickerModal", () => {
     const { container } = render(
       <EmojiPickerModal isOpen={true} onSelect={() => {}} onClose={() => {}} t={defaultI18n} />
     );
-    // The modal card should have max-h-[92vh] in its class list
-    const modal = container.querySelector(".max-h-\\[92vh\\]");
+    const modal = container.querySelector(
+      ".max-h-\\[calc\\(100dvh-6\\.25rem-env\\(safe-area-inset-bottom\\,0px\\)\\)\\]",
+    );
     expect(modal).toBeInTheDocument();
+  });
+
+  it("uses a mobile bottom-sheet layout that keeps clear of the header", () => {
+    const { container } = render(
+      <EmojiPickerModal isOpen={true} onSelect={() => {}} onClose={() => {}} t={defaultI18n} />
+    );
+
+    const overlayShell = container.querySelector(".justify-end");
+    const modal = container.querySelector(
+      ".max-h-\\[calc\\(100dvh-6\\.25rem-env\\(safe-area-inset-bottom\\,0px\\)\\)\\]",
+    );
+    const categoryBar = container.querySelector(
+      ".bottom-\\[calc\\(env\\(safe-area-inset-bottom\\,0px\\)\\+0\\.5rem\\)\\]",
+    );
+    const emojiGrid = container.querySelector(".grid-cols-5");
+
+    expect(overlayShell?.className).toContain("sm:justify-center");
+    expect(overlayShell?.className).toContain("pt-[6.25rem]");
+    expect(modal?.className).toContain("sm:max-h-[92vh]");
+    expect(categoryBar?.className).toContain("sm:bottom-2");
+    expect(emojiGrid?.className).toContain("sm:grid-cols-6");
   });
 
   it("hides category tabs when searching", async () => {

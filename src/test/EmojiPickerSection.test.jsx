@@ -20,22 +20,12 @@ vi.mock("../LangContext", () => ({
 Element.prototype.scrollIntoView = vi.fn();
 
 describe("EmojiPickerSection", () => {
-  const defaultI18n = {
-    profileEditAvatarLabel: "Avatar",
-    avatarPreview: "Avatar Preview",
-    profileEditAvatarHint: "Customize your identity",
-    profileEditChangeEmoji: "Choose emoji",
-    emojiPickerTitle: "Choose emoji",
-    emojiPickerSearch: "Search...",
-  };
-
-  it("renders the current emoji and description", () => {
+  it("renders the current emoji and description", async () => {
     // 🍔 matches "Hamburger" via getEmojiDesc for EN
     render(<EmojiPickerSection emoji="🍔" onChange={() => {}} />);
     
-    expect(screen.getByText("🍔")).toBeInTheDocument();
-    // It should extract the standard description
-    expect(screen.getByText("Hamburger")).toBeInTheDocument();
+    expect(screen.getAllByText("🍔").length).toBeGreaterThanOrEqual(1);
+    expect(await screen.findByText("Hamburger")).toBeInTheDocument();
   });
 
   it("opens the EmojiPickerModal when 'Choose emoji' is clicked", async () => {
